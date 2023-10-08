@@ -36,11 +36,12 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 #include "Adafruit_VL53L0X.h"
 #include <TFT_eSPI.h>
 #include <SPI.h>
+#include <ESP32Ping.h>
 
 uint8_t testCount = 0;
 
 // // Create AsyncWebServer object on port 80
-AsyncWebServer OTAserver(80);
+//AsyncWebServer OTAserver(80);
 
 // //Create time of flight sensor object
 // Adafruit_VL53L0X toF = Adafruit_VL53L0X();
@@ -49,15 +50,15 @@ AsyncWebServer OTAserver(80);
 // VL53L0X_RangingMeasurementData_t measure;
 
 // //Init Display
-// TFT_eSPI tft = TFT_eSPI();
+TFT_eSPI tft = TFT_eSPI();
 
 // //Globals
-// uint8_t I2CPort = 0;
-// uint8_t vecCount = 0;  //Count number of samples taken for timing tests
-// //uint8_t dataCount = 0;
-// uint8_t dist = -1;       //For collecting distance data from VL53L0X
-// uint8_t toFReady = 0;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
-// uint8_t toFLoopCount = 0; //Counter for number of loops between each ToF reading
+uint8_t I2CPort = 0;
+uint8_t vecCount = 0;  //Count number of samples taken for timing tests
+//uint8_t dataCount = 0;
+uint8_t dist = -1;       //For collecting distance data from VL53L0X
+uint8_t toFReady = 0;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
+uint8_t toFLoopCount = 0; //Counter for number of loops between each ToF reading
 
 // //int16_t Acc1Avg[3];   //XYZ vector
 
@@ -67,24 +68,24 @@ WiFiServer wifiServer(80);
 WiFiClient client;
 int16_t socketTestData = 4040;
 
-// char bytes[SOCKPACKSIZE];
-// accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE]; //array of vector arrays 
-// //accVector Acc1Vectors[accPacketSize];
-// uint8_t sampleCount = 0;    //Counts number of samples for the moving average filter
-// uint8_t txCount = 0;
+char bytes[SOCKPACKSIZE];
+accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE]; //array of vector arrays 
+//accVector Acc1Vectors[accPacketSize];
+uint8_t sampleCount = 0;    //Counts number of samples for the moving average filter
+uint8_t txCount = 0;
 
 // //Timer stuff
-// hw_timer_t * timer1 = NULL;
+hw_timer_t * timer1 = NULL;
 
 // //Measurement globals - can remove from production
-// uint32_t AccVecStart;
-// uint32_t AccVecStartMicro;
-// uint32_t AccPacketStart;
-// uint32_t AccPacketStartMicro;
-// uint32_t AccVectorEnd = 0;
-// uint32_t AccVectorEndMicro = 0;
-// uint32_t AccPacketEnd;
-// uint32_t AccPacketEndMicro;
+uint32_t AccVecStart;
+uint32_t AccVecStartMicro;
+uint32_t AccPacketStart;
+uint32_t AccPacketStartMicro;
+uint32_t AccVectorEnd = 0;
+uint32_t AccVectorEndMicro = 0;
+uint32_t AccPacketEnd;
+uint32_t AccPacketEndMicro;
 
 
 // /************************
@@ -94,11 +95,11 @@ void setup() {
 
   Serial.begin(115200);
   Serial.println("I am alive!");
-//    #ifdef DEBUG
-//     Serial.println("I am alive!");
-//   #endif /*DEBUG*/
+   #ifdef DEBUG
+    Serial.println("I am alive!");
+  #endif /*DEBUG*/
   
-//   Wire.begin(I2C_SDA, I2C_SCL);
+  Wire.begin(I2C_SDA, I2C_SCL);
 
 //   while (!toF.begin(0x29,false)) {
 //     Serial.println("Failed to boot VL53L0X ToF sensor... restarting");
@@ -112,8 +113,7 @@ void setup() {
 //   toF.configSensor(toF.VL53L0X_SENSE_LONG_RANGE);  //Set to long range
 //   toFReady = 1;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
 
-
-  AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
+  //AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
 
   WiFi.begin(ssid, password);
   uint8_t wifiAttempts = 0;
@@ -132,55 +132,67 @@ void setup() {
   Serial.println(WiFi.localIP());
   wifiServer.begin();
   Serial.println("Started Wifi server");
-  OTAserver.begin();  //server for OTA
+  //OTAserver.begin();  //server for OTA
   Serial.println("Started OTA server");
 
-//   //Start the timer
-//   timer1 = timerBegin(0, 10, true);
-//   timerStart(timer1);
+  //Test wifi
+  // bool ret = Ping.ping("www.google.com", 10);
+  // if (ret == true) {
+  //   Serial.println("Ping Success!");
+  // } else {
+  //   Serial.println("ping failure");
+  // }
 
-//   tft.init();
-//   // uint16_t CursorX = tft.getCursorX();
-//   // uint16_t CursorY = tft.getCursorY();
-//   // Serial.print("TFT CursorX: ");
-//   // Serial.println(CursorX, DEC);
-//   // Serial.print("TFT CursorY: ");
-//   // Serial.println(CursorY, DEC);
+  //Start the timer
+  timer1 = timerBegin(0, 10, true);
+  timerStart(timer1);
+
+  // tft.init();
+  // // uint16_t CursorX = tft.getCursorX();
+  // // uint16_t CursorY = tft.getCursorY();
+  // // Serial.print("TFT CursorX: ");
+  // // Serial.println(CursorX, DEC);
+  // // Serial.print("TFT CursorY: ");
+  // // Serial.println(CursorY, DEC);
   
-//   // CursorX = tft.getCursorX();
-//   // CursorY = tft.getCursorY();
-//   // Serial.print("TFT CursorX: ");
-//   // Serial.println(CursorX, DEC);
-//   // Serial.print("TFT CursorY: ");
-//   // Serial.println(CursorY, DEC);
-//   tft.fillScreen(0xFFFF);
-//   tft.setTextColor(TFT_BLACK, TFT_WHITE);
-//   tft.setCursor(30,15,1);     //(Left, Top, font)
-//   tft.setTextSize(2);
-//   //tft.setTextFont(1);
-//   tft.println("The Conductor");
-//   tft.setCursor(30,30,1);
-//   tft.println("-------------");
+  // // CursorX = tft.getCursorX();
+  // // CursorY = tft.getCursorY();
+  // // Serial.print("TFT CursorX: ");
+  // // Serial.println(CursorX, DEC);
+  // // Serial.print("TFT CursorY: ");
+  // // Serial.println(CursorY, DEC);
+  // tft.fillScreen(0xFFFF);
+  // tft.setTextColor(TFT_BLACK, TFT_WHITE);
+  // tft.setCursor(30,15,1);     //(Left, Top, font)
+  // tft.setTextSize(2);
+  // //tft.setTextFont(1);
+  // tft.println("The Conductor");
+  // tft.setCursor(30,30,1);
+  // tft.println("-------------");
 
-//   // tft.setTextSize(2);
-//   // tft.setCursor(5,50,1);
-//   // tft.print("IP: ");
-//   tft.setCursor(30,50,1);
-//   tft.println(WiFi.SSID());
+  // // tft.setTextSize(2);
+  // // tft.setCursor(5,50,1);
+  // // tft.print("IP: ");
+  // tft.setCursor(30,50,1);
+  // tft.println(WiFi.SSID());
   
 
-//   // tft.setCursor(2,75,1);
-//   // tft.print("SSID: ");
-//   tft.setCursor(30,75,1);
-//   tft.println(WiFi.localIP());
-//   // CursorX = tft.getCursorX();
-//   // CursorY = tft.getCursorY();
-//   // Serial.print("TFT CursorX: ");
-//   // Serial.println(CursorX, DEC);
-//   // Serial.print("TFT CursorY: ");
-//   // Serial.println(CursorY, DEC);
-//   Serial.println("TFT written");
+  // // tft.setCursor(2,75,1);
+  // // tft.print("SSID: ");
+  // tft.setCursor(30,75,1);
+  // tft.println(WiFi.localIP());
+  // // CursorX = tft.getCursorX();
+  // // CursorY = tft.getCursorY();
+  // // Serial.print("TFT CursorX: ");
+  // // Serial.println(CursorX, DEC);
+  // // Serial.print("TFT CursorY: ");
+  // // Serial.println(CursorY, DEC);
+  // Serial.println("TFT written");
 
+  //Find the I2C ports
+  for (int i = 0; i < 9; i++) {
+    accVecArray[0][sampleCount] = getAccAxes(i);
+  }
 //   // #ifdef DEBUG
 //   //   Serial.print("Core: ");
 //   //   Serial.println(xPortGetCoreID());
@@ -200,77 +212,80 @@ void loop() {
     //   testCount = 0;
     // }
 
-//   if (vecCount == 0) {
-//       AccPacketStartMicro = timerReadMicros(timer1);
-//   }
+  if (vecCount == 0) {
+      AccPacketStartMicro = timerReadMicros(timer1);
+  }
 
-//   client = wifiServer.available();
+  client = wifiServer.available();
  
-//   if (client) {
-//     while (client.connected()) {
-//       while (client.available() > 0) {
-//         uint8_t byteCode = client.read();
+  if (client) {
+    while (client.connected()) {
+        Serial.println("Client Connected");
+      while (client.available() > 0) {
+        Serial.println("Client Available");
+        uint8_t byteCode = client.read();
 
-//         Serial.print("byteCode: ");
-//         Serial.println(byteCode, HEX);
+        Serial.print("byteCode: ");
+        Serial.println(byteCode, HEX);
 
-//         #ifdef DEBUG
-//           Serial.print("byteCode: ");
-//           Serial.println(byteCode, HEX);
-//         #endif /*DEBUG*/
+        #ifdef DEBUG
+          Serial.print("byteCode: ");
+          Serial.println(byteCode, HEX);
+        #endif /*DEBUG*/
 
-//         if (byteCode == 0xFF || byteCode == 0x0F) {  //0xFF is normal case, 0x0F is normal case plus distance
-//           uint8_t dist = -1;         //Distance measurement in mm
-//           //Send Acc data only
-//           #ifdef DEBUG
-//             Serial.println("Start Acc data packet");
-//           #endif /*DEBUG*/
+        if (byteCode == 0xFF || byteCode == 0x0F) {  //0xFF is normal case, 0x0F is normal case plus distance
+          uint8_t dist = -1;         //Distance measurement in mm
+          //Send Acc data only
+          #ifdef DEBUG
+            Serial.println("Start Acc data packet");
+          #endif /*DEBUG*/
 
-//           //accVector Acc1Vector;
+          //accVector Acc1Vector;
 
-//           //Measuring Time
-//           //AccVecStart = timerRead(timer1);
-//           #ifdef DEBUG
-//             Serial.print("AccVecStart: ");
-//             Serial.println(AccVecStart);
-//           #endif /*DEBUG*/
-//           AccVecStartMicro = timerReadMicros(timer1);
+          //Measuring Time
+          //AccVecStart = timerRead(timer1);
+          #ifdef DEBUG
+            Serial.print("AccVecStart: ");
+            Serial.println(AccVecStart);
+          #endif /*DEBUG*/
+          AccVecStartMicro = timerReadMicros(timer1);
           
-//           //Get data
-//           while (sampleCount < MOVINGAVGSIZE) {
-//             uint32_t getDataStart = timerReadMicros(timer1);
-//             for (uint8_t i = 0; i < NUMSENSORS; i++) {
-//               // Serial.print("Sensor: ");
-//               // Serial.println(i, DEC);
-//               accVecArray[i][sampleCount] = getAccAxes(i+1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
-//               // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
-//               // accVecArray[2][sampleCount] = getAccAxes(1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
-//               // accVecArray[3][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
-//             }
+          //Get data
+          while (sampleCount < MOVINGAVGSIZE) {
+            uint32_t getDataStart = timerReadMicros(timer1);
+            for (uint8_t i = 0; i < NUMSENSORS; i++) {
+              // Serial.print("Sensor: ");
+              // Serial.println(i, DEC);
+              accVecArray[i][sampleCount] = getAccAxes(7); //Use when their is only one sensor. Reads the same sensor over and over
+              //USE this line with more than one sensor //accVecArray[i][sampleCount] = getAccAxes(i+1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
+              // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
+              // accVecArray[2][sampleCount] = getAccAxes(1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
+              // accVecArray[3][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
+            }
 
-//             uint32_t getDataEnd = timerReadMicros(timer1);
-//             Serial.print("Sample Time Micros: ");
-//             Serial.println(getDataEnd - getDataStart);
-//             sampleCount++;
-//           }
+            uint32_t getDataEnd = timerReadMicros(timer1);
+            Serial.print("Sample Time Micros: ");
+            Serial.println(getDataEnd - getDataStart);
+            sampleCount++;
+          }
 
-//           uint32_t MvgAvgStart = timerReadMicros(timer1);
-//           if (sampleCount == MOVINGAVGSIZE) {        //After moving average size of samples (3) filter
-//             accVector AccVectorMAVG[NUMSENSORS];
-//             for (int i = 0; i < NUMSENSORS; i++) {   //One vector per sensor
-//               //vectortoBytes(accVecArray[i][0], i);  //Puts data into byte format for socket TX
-//               AccVectorMAVG[i] = movingAvg(i);     
-//               vectortoBytes(AccVectorMAVG[i], i);  //Puts data into byte format for socket TX
-//             }
-//             uint32_t MvgAvgEnd = timerReadMicros(timer1);
-//             Serial.print("Moving Avg Time Micros: ");
-//             Serial.println(MvgAvgEnd - MvgAvgStart);
+          uint32_t MvgAvgStart = timerReadMicros(timer1);
+          if (sampleCount == MOVINGAVGSIZE) {        //After moving average size of samples (3) filter
+            accVector AccVectorMAVG[NUMSENSORS];
+            for (int i = 0; i < NUMSENSORS; i++) {   //One vector per sensor
+              //vectortoBytes(accVecArray[i][0], i);  //Puts data into byte format for socket TX
+              AccVectorMAVG[i] = movingAvg(i);     
+              vectortoBytes(AccVectorMAVG[i], i);  //Puts data into byte format for socket TX
+            }
+            uint32_t MvgAvgEnd = timerReadMicros(timer1);
+            Serial.print("Moving Avg Time Micros: ");
+            Serial.println(MvgAvgEnd - MvgAvgStart);
 
-//             if (byteCode == 0x0F) {
-//               uint32_t getDistStart = timerReadMicros(timer1);
+            // if (byteCode == 0x0F) {
+            //   uint32_t getDistStart = timerReadMicros(timer1);
           
-//               Serial.print("Get distance");
-//               Serial.println();
+            //   Serial.print("Get distance");
+            //   Serial.println();
 
 //               //Structure to hold ToF sensor data
 //               //VL53L0X_RangingMeasurementData_t measure;
@@ -344,72 +359,72 @@ void loop() {
 //               Serial.println(getDistEnd - getDistStart);
 //             }
 
-//             #ifdef DEBUG
-//               Serial.print("accVector.XAcc: ");
-//               Serial.println(accVector.XAcc, DEC);
-//               Serial.print("accVector.YAcc: ");
-//               Serial.println(accVector.YAcc, DEC);
-//               Serial.print("accVector.ZAcc: ");
-//               Serial.println(accVector.ZAcc, DEC);
-//               Serial.print("accVector.XT: ");
-//               Serial.println(accVector.XT, DEC);
-//               Serial.print("accVector.YT: ");
-//               Serial.println(accVector.YT, DEC);
-//               Serial.print("accVector.ZT: ");
-//               Serial.println(accVector.ZT, DEC);
-//             #endif /*DEBUG*/
+            #ifdef DEBUG
+              Serial.print("accVector.XAcc: ");
+              Serial.println(accVector.XAcc, DEC);
+              Serial.print("accVector.YAcc: ");
+              Serial.println(accVector.YAcc, DEC);
+              Serial.print("accVector.ZAcc: ");
+              Serial.println(accVector.ZAcc, DEC);
+              Serial.print("accVector.XT: ");
+              Serial.println(accVector.XT, DEC);
+              Serial.print("accVector.YT: ");
+              Serial.println(accVector.YT, DEC);
+              Serial.print("accVector.ZT: ");
+              Serial.println(accVector.ZT, DEC);
+            #endif /*DEBUG*/
 
-//           uint32_t TXStart = timerReadMicros(timer1);
-//           // if (RXMODE == "byteRx") {
-//             // Serial.print("Byte Rx Mode");
-//             //Write vector byte array to socket one byte at a time
+          uint32_t TXStart = timerReadMicros(timer1);
+          // if (RXMODE == "byteRx") {
+            // Serial.print("Byte Rx Mode");
+            //Write vector byte array to socket one byte at a time
 
-//             uint8_t bytesSent = 0;
-//             for(int i = 0; i < SOCKPACKSIZE; i++) {
-//               uint8_t byte = client.write(bytes[i]);
-//               bytesSent += byte;
+            uint8_t bytesSent = 0;
+            for(int i = 0; i < SOCKPACKSIZE; i++) {
+              uint8_t byte = client.write(bytes[i]);
+              bytesSent += byte;
 
-//               Serial.print("Byte  ");
-//               Serial.print(i);
-//               Serial.print(": ");
-//               Serial.println(bytes[i], DEC);
+              Serial.print("Byte  ");
+              Serial.print(i);
+              Serial.print(": ");
+              Serial.println(bytes[i], DEC);
 
-//               #ifdef DEBUG
-//                 Serial.print("DEC ");
-//                 Serial.print(i);
-//                 Serial.print(": ");
-//                 Serial.println(bytes[i], DEC);
-//                 Serial.print("HEX ");
-//                 Serial.print(i);
-//                 Serial.print(": ");
-//                 Serial.println(bytes[i], HEX);
-//               #endif /*DEBUG*/
+              #ifdef DEBUG
+                Serial.print("DEC ");
+                Serial.print(i);
+                Serial.print(": ");
+                Serial.println(bytes[i], DEC);
+                Serial.print("HEX ");
+                Serial.print(i);
+                Serial.print(": ");
+                Serial.println(bytes[i], HEX);
+              #endif /*DEBUG*/
            
-//           }
+          }
 
-//           if (byteCode == 0x0F) {
-//               Serial.print("Byte code 0x0F send dist ");
-//               Serial.print("distance Deximal: ");
-//               Serial.println(dist, DEC);
+          if (byteCode == 0x0F) {
+              Serial.print("Byte code 0x0F send dist ");
+              Serial.print("distance Deximal: ");
+              Serial.println(dist, DEC);
 
-//             if (dist > 0 && dist < 250) {                        //Send the dist data we have if it is in range
-//               uint8_t byte = client.write(dist);
-//               bytesSent += byte;
+            if (dist > 0 && dist < 250) {                        //Send the dist data we have if it is in range
+              uint8_t byte = client.write(dist);
+              bytesSent += byte;
               
-//             }
-//               else { //We have to send something because the client is waiting for it - range is 0-250 so 255 is okay
-//               uint8_t byte = client.write(0xFF);
-//               bytesSent += byte;
+            }
+              else { //We have to send something because the client is waiting for it - range is 0-250 so 255 is okay
+              uint8_t byte = client.write(0xFF);
+              bytesSent += byte;
               
-//               Serial.print("Byte  ");
-//               Serial.print(SOCKPACKSIZE + 1);
-//               Serial.print(": ");
-//               Serial.println(0xFF, DEC);
+              Serial.print("Byte  ");
+              Serial.print(SOCKPACKSIZE + 1);
+              Serial.print(": ");
+              Serial.println(0xFF, DEC);
 
-//             }
-//               Serial.print("Bytes sent: ");
-//               Serial.println(bytesSent, DEC);
-//           } 
+            }
+              Serial.print("Bytes sent: ");
+              Serial.println(bytesSent, DEC);
+          } 
           
 //           // } else if (RXMODE == "sampleRx") {
 //           //   Serial.print("Sample Rx Mode");
@@ -420,19 +435,19 @@ void loop() {
 //           //     Serial.println(byte, DEC);
 //           // }
 
-//             uint32_t TXEnd = timerReadMicros(timer1);
-//             Serial.print("Tx Time Micros: ");
-//             Serial.println(TXEnd - TXStart);
-//             Serial.println();
+            uint32_t TXEnd = timerReadMicros(timer1);
+            Serial.print("Tx Time Micros: ");
+            Serial.println(TXEnd - TXStart);
+            Serial.println();
 
-//             txCount++;
-//             sampleCount = 0;
-//           }
+            txCount++;
+            sampleCount = 0;
+          }
 
-//               #ifdef DEBUG
-//                 Serial.print("socketTestData Sent: ");
-//                 Serial.println(socketTestData, HEX);
-//               #endif /*DEBUG*/
+              #ifdef DEBUG
+                Serial.print("socketTestData Sent: ");
+                Serial.println(socketTestData, HEX);
+              #endif /*DEBUG*/
 
 //               // //Timing Tests 
 //               // AccVectorEnd = timerRead(timer1);
@@ -446,61 +461,61 @@ void loop() {
 //               // Serial.print("AccVectorTimeMicro: ");
 //               // Serial.println(AccVectorTimeMicro);
 
-//               #ifdef DEBUG
-//                 Serial.print("AccVectorTime: ");
-//                 Serial.println(AccVectorTime);
-//                 Serial.print("AccVectorTimeMicro: ");
-//                 Serial.println(AccVectorTimeMicro);
-//                 Serial.print("AccVecStartMicro: ");
-//                 Serial.println(AccVecStartMicro);
-//               #endif /*DEBUG*/
+              #ifdef DEBUG
+                Serial.print("AccVectorTime: ");
+                Serial.println(AccVectorTime);
+                Serial.print("AccVectorTimeMicro: ");
+                Serial.println(AccVectorTimeMicro);
+                Serial.print("AccVecStartMicro: ");
+                Serial.println(AccVecStartMicro);
+              #endif /*DEBUG*/
 
-//               #ifdef DEBUG
+              #ifdef DEBUG
                 
-//                 Serial.print("AccVectorEnd: ");
-//                 Serial.println(AccVectorEnd);
+                Serial.print("AccVectorEnd: ");
+                Serial.println(AccVectorEnd);
 
-//                 Serial.print("AccVectorEndMicro: ");
-//                 Serial.println(AccVectorEndMicro);
+                Serial.print("AccVectorEndMicro: ");
+                Serial.println(AccVectorEndMicro);
               
-//                 Serial.print("AccVectorTime: ");
-//                 Serial.println(AccVectorTime);
+                Serial.print("AccVectorTime: ");
+                Serial.println(AccVectorTime);
 
-//                 Serial.print("AccVectorTimeMicro: ");
-//                 Serial.println(AccVectorTimeMicro);
-//               #endif /*DEBUG*/
-//           } 
-//         }
-//       }
+                Serial.print("AccVectorTimeMicro: ");
+                Serial.println(AccVectorTimeMicro);
+              #endif /*DEBUG*/
+          } 
+        }
+      }
 //     //client.stop();
 //     // Serial.println("Client disconnected");
 //     // Serial.println();
 
-//   }
+  }
   
-//   if (timerRead(timer1) >= 0x100000000) {   //Full 32 bits = 0x100000000 (~ 9min with 8MHz timer); 24 bits = 0x1000000 (2s with 8MHz timer)
-//     uint32_t rollOver = timerRead(timer1);
+  if (timerRead(timer1) >= 0x100000000) {   //Full 32 bits = 0x100000000 (~ 9min with 8MHz timer); 24 bits = 0x1000000 (2s with 8MHz timer)
+    uint32_t rollOver = timerRead(timer1);
 
-//       #ifdef DEBUG
-//         Serial.print("rollOver: ");
-//         Serial.println(rollOver);
-//       #endif /*DEBUG*/
+      #ifdef DEBUG
+        Serial.print("rollOver: ");
+        Serial.println(rollOver);
+      #endif /*DEBUG*/
 
-//       #ifdef DEBUG
-//         uint32_t rollOverMicro = timerReadMicros(timer1);
-//         Serial.print("rollOverMicro: ");
-//         Serial.println(rollOverMicro);
-//       #endif /*DEBUG*/
+      #ifdef DEBUG
+        uint32_t rollOverMicro = timerReadMicros(timer1);
+        Serial.print("rollOverMicro: ");
+        Serial.println(rollOverMicro);
+      #endif /*DEBUG*/
 
-//     timerRestart(timer1);
-//     #ifdef DEBUG
-//       Serial.println("TIMER ROLLOVER");
-//       Serial.println("TIMER ROLLOVER");
-//       Serial.println("TIMER ROLLOVER");
-//       Serial.println("TIMER ROLLOVER");
-//       Serial.println("TIMER ROLLOVER");
-//       Serial.println("TIMER ROLLOVER");
-//       #endif /*DEBUG*/
-//   }
+    timerRestart(timer1);
+    #ifdef DEBUG
+      Serial.println("TIMER ROLLOVER");
+      Serial.println("TIMER ROLLOVER");
+      Serial.println("TIMER ROLLOVER");
+      Serial.println("TIMER ROLLOVER");
+      Serial.println("TIMER ROLLOVER");
+      Serial.println("TIMER ROLLOVER");
+      #endif /*DEBUG*/
+  }
   
   }

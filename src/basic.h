@@ -8,8 +8,8 @@
 #define HTTP_PORT 80
 #define LOCALADDR 1
 #define I2CADDR 0x70  //I2C Address for multiplexor
-#define I2C_SDA 0     //I2C pins
-#define I2C_SCL 1
+#define I2C_SDA 8     //I2C pins
+#define I2C_SCL 9
 #define MXCI2CADDR 0x15   //I2C Address for MXC400 Accelerometer
 #define VL53L0XADDR 0x29  //I2C Address for VL53L0X Time of flight sensor
 // #define AccPort1 1        //Ports for Accelerometer 1 (for multiplexor)
