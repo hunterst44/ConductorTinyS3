@@ -29,7 +29,7 @@
 #define MOVINGAVGSIZE 5   //Number samples to include in moving average [12.5ms * 8 = 100ms]
 #define ZEROTHRES 18.0     //All sensor values between +- of this value are set to zero
 #define RXMODE "byteRx"
-#define TOFINTPIN 8 //Interupt pin for VL53L0X ToF sensor
+#define TOFINTPIN 6 //Interupt pin for VL53L0X ToF sensor
 
 ///************************************
 //          Data Globals
