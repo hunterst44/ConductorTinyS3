@@ -397,6 +397,20 @@ void loop() {
             // Serial.print("Byte Rx Mode");
             //Write vector byte array to socket one byte at a time
 
+            //Get packet size in bytes SOCKPACKSIZE + 0 or 1, or text
+            uint8_t dataTx;
+            if (byteCode == 0x0F) { 
+              dataTx = SOCKPACKSIZE + 1;
+              Serial.print("Byte code 0x0F send dist ");
+              Serial.print("distance Deximal: ");
+              Serial.println(dist, DEC);
+              if (dist < 0 && dist > 250) {    //If distance is less than zero or greater than 250 it is an error send 0xFF
+                dist = 0xFF;
+            }
+            } else if (byteCode == 0xFF) {
+              dataTx = SOCKPACKSIZE;
+            }
+
             uint8_t bytesSent = 0;
             for(int i = 0; i < SOCKPACKSIZE; i++) {
               uint8_t byte = client.write(bytes[i]);
@@ -419,30 +433,6 @@ void loop() {
               #endif /*DEBUG*/
            
           }
-
-          if (byteCode == 0x0F) {
-              Serial.print("Byte code 0x0F send dist ");
-              Serial.print("distance Deximal: ");
-              Serial.println(dist, DEC);
-
-            if (dist > 0 && dist < 250) {                        //Send the dist data we have if it is in range
-              uint8_t byte = client.write(dist);
-              bytesSent += byte;
-              
-            }
-              else { //We have to send something because the client is waiting for it - range is 0-250 so 255 is okay
-              uint8_t byte = client.write(0xFF);
-              bytesSent += byte;
-              
-              Serial.print("Byte  ");
-              Serial.print(SOCKPACKSIZE + 1);
-              Serial.print(": ");
-              Serial.println(0xFF, DEC);
-
-            }
-              Serial.print("Bytes sent: ");
-              Serial.println(bytesSent, DEC);
-          } 
           
 //           // } else if (RXMODE == "sampleRx") {
 //           //   Serial.print("Sample Rx Mode");
