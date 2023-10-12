@@ -1,4 +1,7 @@
 #include "Adafruit_VL53L0X.h"
+#include <TFT_eSPI.h>
+#include <AsyncElegantOTA.h>
+#include <ESPAsyncWebServer.h>
 
 // ----------------------------------------------------------------------------
 // Definition of macros
@@ -54,9 +57,15 @@ extern uint8_t txCount;
 extern uint8_t sampleCount;
 extern uint8_t dist;
 extern uint8_t toFReady;
+extern char APssid[];
+extern char APpassword[];
+//extern AsyncWebServer OTAserver(8080);
+extern Adafruit_VL53L0X toF;
+extern VL53L0X_RangingMeasurementData_t measure;
+extern TFT_eSPI tft;
 
 ///************************************
-//          I2C Globals
+//          Global Functions
 //*************************************
 extern accVector getAccAxes(uint8_t Port);
 extern int16_t readAccReg(uint8_t Port, uint8_t r);
@@ -65,6 +74,10 @@ extern int16_t getAxisAcc(int16_t axisHi, int16_t axisLo);
 extern void vectortoBytes(accVector vector, uint8_t sensorIndex);
 extern accVector movingAvg(uint8_t vecIndex);
 extern uint8_t getDist(Adafruit_VL53L0X toF);
+extern uint8_t newNetConnect(uint8_t rxStr[50]);
+extern uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]);
+extern void tftWriteNetwork(char ssid[]);
+extern void tftSetup();
 
 
 //**********************************

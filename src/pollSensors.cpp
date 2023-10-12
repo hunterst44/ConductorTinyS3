@@ -15,14 +15,14 @@ accVector movingAvg(uint8_t vecIndex) -- Averages three samples to create a movi
 vectortoBytes(accVector vector, uint8_t sensorIndex) -- makes byte array for TX
 
 */
-#include <Arduino.h>
-#include <WiFi.h>
+// #include <Arduino.h>
+// #include <WiFi.h>
 #include "basic.h"
-#include <Wire.h>
-#include <stdlib.h>
-#include "secrets.h"
-#include <math.h>
-#include "Adafruit_VL53L0X.h"
+// #include <Wire.h>
+// #include <stdlib.h>
+// #include "secrets.h"
+// #include <math.h>
+// #include "Adafruit_VL53L0X.h"
 
 
 /************************
@@ -515,6 +515,150 @@ accVector movingAvg(uint8_t sensorIndex) {
   return movingAvgVect;
 }
 
+/********************************************
+ * newNetConnect(uint8_t rxStr[50])
+*********************************************/
+uint8_t newNetConnect(uint8_t rxStr[50]) {
+    
+    Serial.println("newNetConnect()");
+    #ifdef DEBUG
+    Serial.println("newNetConnect()");
+    #endif /*DEBUG*/
+
+    uint8_t gotSSID = 0;
+    uint8_t gotPSWD = 0;
+    uint8_t SSIDLength = 0;
+    uint8_t PSWDLength = 0;
+    char tmpSSID[50];
+    char tmpPSWD[50];
+    for (int z = 0; z < 50; z++) {
+      if (gotSSID = 0) {
+        //Need better checking here...
+        if (rxStr[z] != '_') {
+        tmpSSID[SSIDLength] = rxStr[z];
+        SSIDLength++;
+        //"__--__"
+        } else if (rxStr[z+1] != '_' && rxStr[z+2] == '_' && rxStr[z+2] == '-' && rxStr[z+2] == '-' && rxStr[z+2] == '_' && rxStr[z+2] == '_') {
+          gotSSID = 1;
+        }
+      } else if (gotPSWD == 0) {
+        if (rxStr[z] != '_') {
+        tmpPSWD[PSWDLength] = rxStr[z];
+        PSWDLength++;
+        } else if (rxStr[z+1] != '_' && rxStr[z+2] == '_' && rxStr[z+2] == '-' && rxStr[z+2] == '-' && rxStr[z+2] == '_' && rxStr[z+2] == '_') {
+          gotPSWD = 1;
+          break;
+        }
+      }
+    }
+      char newSSID[SSIDLength + 1];
+      char newPSWD[PSWDLength + 1];
+      Serial.print("newSSID: ");
+      for (int i = 0; i < SSIDLength; i++) {
+        newSSID[i] = tmpSSID[i];
+        Serial.print(newSSID[i]);
+        Serial.println("");
+        //Serial.print(newSSID[i], CHAR);
+      }
+
+      Serial.print("newPSWD: ");
+      for (int j = 0; j < SSIDLength; j++) {
+        newPSWD[j] = tmpPSWD[j];
+        Serial.print(newPSWD[j]);
+        Serial.println("");
+      }
+
+      Serial.println("Got new connection information. Reconnecting...");
+      if (connectWiFi(1, newSSID, newPSWD)) {
+        Serial.println("Connection Successful");
+        return 1;
+      } else {
+        Serial.println("Connection Failed");
+        return -1;
+      }
+    }
+
+/********************************************
+ * connectWiFi(uint8_t mode, char ssid[], char pswd[])
+*********************************************/
+uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]) {
+   Serial.println("connectWiFi()");
+    #ifdef DEBUG
+    Serial.println("connectWiFi()");
+   #endif /*DEBUG*/
+
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFi.disconnect();
+  }  
+
+  if (mode == 0) {   //Ap mode (start up)
+      WiFi.mode(WIFI_AP);
+      WiFi.softAP(ssid, pswd);  
+  } else if (mode == 1) {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, pswd);
+  }
+  
+uint8_t wifiAttempts = 0;
+  while(WiFi.status() != WL_CONNECTED)  {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+    wifiAttempts++; 
+    //Serial.println(wifiAttempts, DEC);
+      //Reset ESP32 after 12 failed connection attempts
+        if (wifiAttempts > 5) {
+          if (mode == 0) {
+            Serial.println("Restarting");
+            ESP.restart();
+          } else {
+            Serial.println("Unable to connect. Switching to AP mode");
+            if (connectWiFi(0, APssid, APpassword)) {
+              return -1;
+            }
+          }
+      }
+  }
+  Serial.println("Connected to network");
+
+  tftWriteNetwork(ssid);
+  return 1;
+}
+
+/********************************************
+ * tftSetup()
+*********************************************/
+void tftSetup() {
+  Serial.println("tftSetup()");
+    #ifdef DEBUG
+    Serial.println("tftSetup()");
+   #endif /*DEBUG*/
+  tft.init();
+  tft.fillScreen(0xFFFF);
+  tft.setTextColor(TFT_BLACK, TFT_WHITE);
+  tft.setCursor(30,15,1);     //(Left, Top, font)
+  tft.setTextSize(2);
+  //tft.setTextFont(1);
+  tft.println("The Conductor");
+  tft.setCursor(30,30,1);
+  tft.println("-------------");
+}
+
+/********************************************
+ * tftWriteNetwork(char ssid[])
+*********************************************/
+void tftWriteNetwork(char ssid[]) {
+  Serial.println("tftWriteNetwork()");
+    #ifdef DEBUG
+    Serial.println("tftWriteNetwork()");
+   #endif /*DEBUG*/
+  //Write the network connection data to the TFT
+  tft.setCursor(30,50,1);
+  tft.println(ssid);
+  tft.setCursor(30,75,1);
+  tft.println(WiFi.localIP());
+
+  Serial.println("TFT written");
+}
 /*
 MXC4005XC-B Accelerometer I2C requirements:
 The first byte transmitted by the master following a START is used to address the slave device. The first 7 bits

@@ -41,7 +41,7 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 uint8_t testCount = 0;
 
 // // Create AsyncWebServer object on port 80
-//AsyncWebServer OTAserver(80);
+AsyncWebServer OTAserver(8080);
 
 // //Create time of flight sensor object
 Adafruit_VL53L0X toF = Adafruit_VL53L0X();
@@ -62,8 +62,8 @@ uint8_t toFLoopCount = 0; //Counter for number of loops between each ToF reading
 
 // //int16_t Acc1Avg[3];   //XYZ vector
 
-const char* ssid = APNETWORK;
-const char* password = APPASS;
+char APssid[] = APNETWORK;
+char APpassword[] = APPASS;
 WiFiServer wifiServer(80);
 WiFiClient client;
 int16_t socketTestData = 4040;
@@ -116,29 +116,18 @@ void setup() {
   toF.configSensor(toF.VL53L0X_SENSE_LONG_RANGE);  //Set to long range
   toFReady = 1;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
 
-  //AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
+  tftSetup();
 
   //To Start connect in AP mode
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid, password);
-  //WiFi.begin(ssid, password);
-  uint8_t wifiAttempts = 0;
-  while(WiFi.status() != WL_CONNECTED)  {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-    wifiAttempts++;
-    //Serial.println(wifiAttempts, DEC);
-      //Reset ESP32 after 12 failed connection attempts
-        if (wifiAttempts > 5) {
-        Serial.print("Restarting");
-        ESP.restart();
-      }
-    }
+  connectWiFi(0, APssid, APpassword);
+
+  AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
+
   Serial.println("Connected to the WiFi Network");
   Serial.println(WiFi.localIP());
   wifiServer.begin();
   Serial.println("Started Wifi server");
-  //OTAserver.begin();  //server for OTA
+  OTAserver.begin();  //server for OTA
   Serial.println("Started OTA server");
 
   //Test wifi
@@ -152,48 +141,6 @@ void setup() {
   //Start the timer
   timer1 = timerBegin(0, 10, true);
   timerStart(timer1);
-
-  tft.init();
-  // // uint16_t CursorX = tft.getCursorX();
-  // // uint16_t CursorY = tft.getCursorY();
-  // // Serial.print("TFT CursorX: ");
-  // // Serial.println(CursorX, DEC);
-  // // Serial.print("TFT CursorY: ");
-  // // Serial.println(CursorY, DEC);
-  
-  // // CursorX = tft.getCursorX();
-  // // CursorY = tft.getCursorY();
-  // // Serial.print("TFT CursorX: ");
-  // // Serial.println(CursorX, DEC);
-  // // Serial.print("TFT CursorY: ");
-  // // Serial.println(CursorY, DEC);
-  tft.fillScreen(0xFFFF);
-  tft.setTextColor(TFT_BLACK, TFT_WHITE);
-  tft.setCursor(30,15,1);     //(Left, Top, font)
-  tft.setTextSize(2);
-  //tft.setTextFont(1);
-  tft.println("The Conductor");
-  tft.setCursor(30,30,1);
-  tft.println("-------------");
-
-  // tft.setTextSize(2);
-  // tft.setCursor(5,50,1);
-  // tft.print("IP: ");
-  tft.setCursor(30,50,1);
-  tft.println(WiFi.SSID());
-  
-
-  // tft.setCursor(2,75,1);
-  // tft.print("SSID: ");
-  tft.setCursor(30,75,1);
-  tft.println(WiFi.localIP());
-  // CursorX = tft.getCursorX();
-  // CursorY = tft.getCursorY();
-  // Serial.print("TFT CursorX: ");
-  // Serial.println(CursorX, DEC);
-  // Serial.print("TFT CursorY: ");
-  // Serial.println(CursorY, DEC);
-  Serial.println("TFT written");
 
   //Find the I2C ports
   // for (int i = 0; i < 9; i++) {
@@ -210,13 +157,8 @@ void setup() {
 // *************************/
 void loop() {
 
-    // if (testCount < 254){
-    //   testCount++;
-    // }
-    // else {
-    //   Serial.println("Help me!");
-    //   testCount = 0;
-    // }
+  char bytes[SOCKPACKSIZE];
+  txIdx = SOCKPACKSIZE; 
 
   if (vecCount == 0) {
       AccPacketStartMicro = timerReadMicros(timer1);
@@ -229,13 +171,18 @@ void loop() {
         //Serial.println("Client Connected");
       while (client.available() > 0) {
         Serial.println("Client Available");
+
+//***************************************************************/
+                       //Receive Data
+//***************************************************************/
         uint8_t byteCode;
+        uint8_t rxStr[rxIdx];
         if (rxIdx > 1) {
-          uint8_t rxStr[rxIdx];
+          //uint8_t rxStr[rxIdx];
           for (uint8_t k; k < rxIdx; k++) {
             rxStr[k] = client.read();
           }
-          uint8_t byteCode = 0x44;
+          uint8_t byteCode = 0x44;   //Tells the loop to process the network data received
         // uint8_t txIdx = SOCKPACKSIZE;
         } else {
           uint8_t byteCode = client.read();
@@ -253,18 +200,16 @@ void loop() {
           //0F asks for sensor readings w/ ToF
           txIdx = SOCKPACKSIZE + 1;
           char bytes[SOCKPACKSIZE + 1];
-        } else {
-          //All others jsut send SockPackSize
-          txIdx = SOCKPACKSIZE;
-          char bytes[SOCKPACKSIZE];
-        }
+        } //else {
+        //   //All others jsut send SockPackSize
+        //   txIdx = SOCKPACKSIZE;
+        //   char bytes[SOCKPACKSIZE];
+        // }
 
-      if (byteCode == 0x44) {
-        //Received network infos from client
-        //Call function to parse the data out and reconnect 
-      }
-
-        //Client wants sensor data
+        //Client wants ACC data
+//***************************************************************/
+                       //Get Acc Data
+//***************************************************************/
         if (byteCode == 0xFF || byteCode == 0x0F) {  //0xFF is normal case, 0x0F is normal case plus distance
             //Set up index and array to receive data                
           uint8_t dist = -1;         //Distance measurement in mm
@@ -320,6 +265,9 @@ void loop() {
             sampleCount++;
           }
 
+//***************************************************************/
+                       //Moving Average
+//***************************************************************/
           uint32_t MvgAvgStart = timerReadMicros(timer1);
           if (sampleCount == MOVINGAVGSIZE) {        //After moving average size of samples (3) filter
             accVector AccVectorMAVG[NUMSENSORS];
@@ -334,7 +282,10 @@ void loop() {
           }
         }
 
-        //We need data from the ToF
+        //Client also needs data from the ToF
+//***************************************************************/
+                       //Get Distance
+//***************************************************************/
         if (byteCode == 0x0F) {
           Serial.print("Byte code 0x0F send dist ");
           uint32_t getDistStart = timerReadMicros(timer1);
@@ -418,8 +369,11 @@ void loop() {
             dist = 0xFF;
           } 
         }    //End 0x0F- Get distance 
-        
-        if (byteCode == 0x22) {    //Client is going to send text - let them know we are ready
+
+//***************************************************************/
+                //Prepare for Network Data - Send Ack
+//***************************************************************/        
+        if (byteCode == 0x22) {    //Client is going to send text
               Serial.println("byteCode 0x22: Prepare for text");  //Next message is length of the text (1 byte)
               //Send the secret code to let them know we are ready.
               bytes[0] = 0xFF;
@@ -427,7 +381,37 @@ void loop() {
               for (int i = 2; i < txIdx; i++) {
                 bytes[i] = 0;
               }
+              rxIdx = 50;   // Network info is always 50 characters with data at the front
         }
+
+//***************************************************************/
+              //Received Network data - Send Ack
+//***************************************************************/ 
+        if (byteCode == 0x44) {
+          //Received network infos from client
+          //TODO 
+          //Call function to parse the data out and reconnect
+          if (newNetConnect(rxStr)) {
+            Serial.println("Successfully reconnected!");
+            //Prep acknowledgement code
+            bytes[0] = 0x0F;
+            bytes[1] = 0xFF;
+            for (int i = 2; i < txIdx; i++) {
+              bytes[i] = 0;
+            }
+            //Reset Variables 
+            rxIdx = 1;
+          }
+
+          //Prep acknowledgement code
+          bytes[0] = 0x0F;
+          bytes[1] = 0xFF;
+          for (int i = 2; i < txIdx; i++) {
+            bytes[i] = 0;
+          }
+          //Reset Variables 
+          rxIdx = 1;
+      }
 
 
         #ifdef DEBUG
@@ -452,8 +436,11 @@ void loop() {
 
         //Get packet size in bytes SOCKPACKSIZE + 0 or 1, or text
         
+//***************************************************************/
+                       //Send Data
+//***************************************************************/
+      if (byteCode != 0x44) {   //Don't need to send data after changing network
         uint8_t bytesSent = 0;
-        //Iterate through client
         for(int i = 0; i < txIdx; i++) {
           uint8_t byte = client.write(bytes[i]);
           bytesSent += byte;
@@ -475,16 +462,6 @@ void loop() {
           #endif /*DEBUG*/
         
       }
-          
-//           // } else if (RXMODE == "sampleRx") {
-//           //   Serial.print("Sample Rx Mode");
-//           //   //Print the whole packet at once
-//           //     uint8_t byte = client.print(bytes);
-
-//           //     Serial.print("Bytes sent: ");
-//           //     Serial.println(byte, DEC);
-//           // }
-
             uint32_t TXEnd = timerReadMicros(timer1);
             Serial.print("Tx Time Micros: ");
             Serial.println(TXEnd - TXStart);
@@ -492,7 +469,7 @@ void loop() {
 
             txCount++;
             sampleCount = 0;
-          
+      } 
 
               #ifdef DEBUG
                 Serial.print("socketTestData Sent: ");
