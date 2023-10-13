@@ -72,7 +72,7 @@ uint8_t txIdx = SOCKPACKSIZE;
 uint8_t rxIdx = 1; //Size of data expected from client - almost always 1
 uint8_t byteCode;
 //uint8_t sockRxStrIdx = 0;
-char bytes[SOCKPACKSIZE];      //Bytes size will be determined at run time - to accept arbitrary length strings
+char bytes[SOCKPACKSIZE + 1];      //Bytes size will be determined at run time - to accept arbitrary length strings
 accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE]; //array of vector arrays 
 //accVector Acc1Vectors[accPacketSize];
 uint8_t sampleCount = 0;    //Counts number of samples for the moving average filter
@@ -142,10 +142,10 @@ void setup() {
   timerStart(timer1);
 
   //Find the I2C ports
-  for (uint8_t i = 0; i < 9; i++) {
-  //accVecArray[0][sampleCount] = getAccAxes(i);
-  readAccReg(i, 3);
-  }
+  // for (uint8_t i = 0; i < 9; i++) {
+  // //accVecArray[0][sampleCount] = getAccAxes(i);
+  // readAccReg(i, 3);
+  // }
 //   // #ifdef DEBUG
 //   //   Serial.print("Core: ");
 //   //   Serial.println(xPortGetCoreID());
@@ -158,7 +158,7 @@ void setup() {
 void loop() {
 
   //char bytes[SOCKPACKSIZE];
-  txIdx = SOCKPACKSIZE; 
+  //txIdx = SOCKPACKSIZE; 
 
   if (vecCount == 0) {
       AccPacketStartMicro = timerReadMicros(timer1);
@@ -168,9 +168,9 @@ void loop() {
  
   if (client) {
     while (client.connected()) {
-        Serial.println("Client Connected");
+        //Serial.println("Client Connected");
       while (client.available() > 0) {
-        Serial.println("Client Available");
+        //Serial.println("Client Available");
 
 //***************************************************************/
                        //Receive Data
@@ -201,11 +201,11 @@ void loop() {
       if (byteCode == 0x0F) {
           //0F asks for sensor readings w/ ToF
           txIdx = SOCKPACKSIZE + 1;
-          char bytes[SOCKPACKSIZE + 1];
+          //char bytes[SOCKPACKSIZE + 1];
         } else {
           //All others just send SockPackSize
           txIdx = SOCKPACKSIZE;
-          char bytes[SOCKPACKSIZE];
+          //char bytes[SOCKPACKSIZE];
         }
 
         //Client wants ACC data
@@ -234,8 +234,8 @@ void loop() {
           while (sampleCount < MOVINGAVGSIZE) {
             uint32_t getDataStart = timerReadMicros(timer1);
             for (uint8_t i = 0; i < NUMSENSORS; i++) {
-              Serial.print("Sensor: ");
-              Serial.println(i, DEC);
+              // Serial.print("Sensor: ");
+              // Serial.println(i, DEC);
               uint8_t portNoShift = 0;
               switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
                 case 0:
@@ -266,7 +266,14 @@ void loop() {
             Serial.println(getDataEnd - getDataStart);
             sampleCount++;
           }
-
+          Serial.print("accVecArray[0][2]: ");
+          Serial.println(accVecArray[0][2].XAcc, DEC);
+          Serial.print("accVecArray[2][4]: ");
+          Serial.println(accVecArray[2][4].YAcc, DEC);
+          Serial.print("accVecArray[0][2]: ");
+          Serial.println(accVecArray[0][2].XAcc, DEC);
+          Serial.print("accVecArray[1][2]: ");
+          Serial.println(accVecArray[1][2].ZAcc, DEC);
 //***************************************************************/
                        //Moving Average
 //***************************************************************/
@@ -275,9 +282,12 @@ void loop() {
             accVector AccVectorMAVG[NUMSENSORS];
             for (int i = 0; i < NUMSENSORS; i++) {   //One vector per sensor
               //vectortoBytes(accVecArray[i][0], i);  //Puts data into byte format for socket TX
+              //Serial.print("movingAvg sensor: ");
+              //Serial.println(i, DEC);
               AccVectorMAVG[i] = movingAvg(i);  
               //sensorIndex = sensorIndex*ACCPACKSIZE;
-              bytes[0 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].XAcc;
+              
+              bytes[0 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].XAcc; //0 + (3*3) = 9 
               bytes[1 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].YAcc;
               bytes[2 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].ZAcc;   
               //vectortoBytes(AccVectorMAVG[i], i);  //Puts data into byte format for socket TX
@@ -338,7 +348,7 @@ void loop() {
               Serial.print("Scaled distance: ");
               Serial.println(dist, HEX);
             
-              Serial.print("distance Deximal: ");
+              Serial.print("distance Decimal: ");
               Serial.println(dist, DEC);
 
               Serial.print("samples per distance measurement: ");
@@ -357,7 +367,7 @@ void loop() {
                 Serial.print("Phase Fail");
               } else if ((measure.RangeStatus == 255)) {
                 Serial.print("No Data Fail");
-                ESP.restart();
+                //ESP.restart();
               }
             }
             toF.clearInterruptMask(false);    //Reset the interrupt for the next measurement
@@ -374,6 +384,10 @@ void loop() {
           if (dist < 0 && dist > 250) {    //If distance is less than zero or greater than 250 it is an error send 0xFF
             dist = 0xFF;
           } 
+          bytes[SOCKPACKSIZE] = dist; 
+          Serial.print("byteCode: ");
+          Serial.println(byteCode, DEC);
+
         }    //End 0x0F- Get distance 
 
 //***************************************************************/
@@ -431,6 +445,8 @@ void loop() {
 //***************************************************************/
       if ((byteCode == 0xFF || byteCode == 0x0F || byteCode == 0x22)) {   //Don't need to send data after changing network
         uint8_t bytesSent = 0;
+        Serial.print("txIdx: ");
+        Serial.println(txIdx, DEC);
         for(int i = 0; i < txIdx; i++) {
           uint8_t byte = client.write(bytes[i]);
           bytesSent += byte;
