@@ -524,6 +524,10 @@ uint8_t newNetConnect(uint8_t rxStr[50]) {
     Serial.println("newNetConnect()");
     #endif /*DEBUG*/
 
+    if (rxStr[0] == 0x42) {
+    Serial.print("rxStr[0]: ");
+    Serial.println(rxStr[0], HEX);
+    }
     uint8_t gotSSID = 0;
     uint8_t gotPSWD = 0;
     uint8_t SSIDLength = 0;
@@ -533,18 +537,23 @@ uint8_t newNetConnect(uint8_t rxStr[50]) {
     for (int z = 0; z < 50; z++) {
       if (gotSSID = 0) {
         //Need better checking here...
-        if (rxStr[z] != '_') {
+        if (rxStr[z] != 0x5F) { 
         tmpSSID[SSIDLength] = rxStr[z];
+        Serial.print("Found Character");
+        Serial.println(tmpSSID[z], HEX);
         SSIDLength++;
+
         //"__--__"
-        } else if (rxStr[z+1] != '_' && rxStr[z+2] == '_' && rxStr[z+2] == '-' && rxStr[z+2] == '-' && rxStr[z+2] == '_' && rxStr[z+2] == '_') {
+        } else if (rxStr[z+1] != 0x5F && rxStr[z+2] == 0x5F && rxStr[z+3] == 0x2D && rxStr[z+4] == 0x2D && rxStr[z+5] == 0x5F && rxStr[z+6] == 0x5F) {
+          Serial.print("Got SSID");
           gotSSID = 1;
         }
       } else if (gotPSWD == 0) {
         if (rxStr[z] != '_') {
         tmpPSWD[PSWDLength] = rxStr[z];
         PSWDLength++;
-        } else if (rxStr[z+1] != '_' && rxStr[z+2] == '_' && rxStr[z+2] == '-' && rxStr[z+2] == '-' && rxStr[z+2] == '_' && rxStr[z+2] == '_') {
+        } else if (rxStr[z+1] != 0x5F && rxStr[z+2] == 0x5F && rxStr[z+3] == 0x2D && rxStr[z+4] == 0x2D && rxStr[z+5] == 0x5F && rxStr[z+6] == 0x5F) {
+          Serial.print("Got PSWD");
           gotPSWD = 1;
           break;
         }

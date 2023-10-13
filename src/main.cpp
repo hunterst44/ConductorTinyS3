@@ -183,9 +183,16 @@ void loop() {
         } else {
           Serial.println("rxIdx != 1 Should conly be here when we write text...");
           //uint8_t rxStr[rxIdx];
+          
           for (uint8_t k; k < rxIdx; k++) {
             rxStr[k] = client.read();
+            Serial.print("rxStr[");
+            Serial.print(k, DEC);
+            Serial.print("]: ");
+            Serial.println(rxStr[k], HEX);
           }
+          // Serial.print("rxStr[0]: ");
+          // Serial.println(rxStr[0], HEX);
           byteCode = 0x44;   //Tells the loop to process the network data received
         // uint8_t txIdx = SOCKPACKSIZE; 
         }
@@ -411,6 +418,8 @@ void loop() {
           //Received network infos from client
           //TODO 
           //Call function to parse the data out and reconnect
+          Serial.print("rxStr[0]: ");
+          Serial.println(rxStr[0], HEX);
           if (newNetConnect(rxStr)) {
             //Reset Variables 
             rxIdx = 1;
