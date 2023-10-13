@@ -159,8 +159,8 @@ accVector getAccAxes(uint8_t Port) {
 
 int16_t readAccReg(uint8_t Port, uint8_t r) {
 
-    // Serial.println();
-    // Serial.println("readAccReg(uint8_t Port, int r)");
+    Serial.println();
+    Serial.println("readAccReg(uint8_t Port, int r)");
     // Serial.println();
     // Serial.print("readAccReg(uint8_t Port, int r), TxCount:");
     // Serial.println(txCount, DEC);
@@ -205,7 +205,6 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
   Wire.beginTransmission(MXCI2CADDR);    //Open TX with start address and stop
   Wire.write(r);                  //Send the register we want to read to the sensor
   
-
   Serial.print("r transmitted: ");
   Serial.println(r, HEX);
 
@@ -231,6 +230,7 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
             Serial.print("I2C Error: ");
             Serial.println(error,HEX);
           #endif /*DEBUG*/
+          //return -1;
       }
 
     Wire.requestFrom(MXCI2CADDR, 1, 1);   //Send read request
@@ -587,40 +587,45 @@ uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]) {
     Serial.println("connectWiFi()");
    #endif /*DEBUG*/
 
+  char ip[] = "0.0.0.0";
+
   if (WiFi.status() == WL_CONNECTED) {
     WiFi.disconnect();
+    Serial.println("Disconnected");
   }  
 
   if (mode == 0) {   //Ap mode (start up)
       WiFi.mode(WIFI_AP);
-      WiFi.softAP(ssid, pswd);  
+      Serial.println("Creating AP network");
+      WiFi.softAP(ssid, pswd); 
+      Serial.print("Connected: ");
+      Serial.println(WiFi.softAPIP());
+      //char ip[] = WiFi.softAPIP();
   } else if (mode == 1) {
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pswd);
-  }
   
-uint8_t wifiAttempts = 0;
-  while(WiFi.status() != WL_CONNECTED)  {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-    wifiAttempts++; 
-    //Serial.println(wifiAttempts, DEC);
-      //Reset ESP32 after 12 failed connection attempts
-        if (wifiAttempts > 5) {
-          if (mode == 0) {
-            Serial.println("Restarting");
-            ESP.restart();
-          } else {
-            Serial.println("Unable to connect. Switching to AP mode");
-            if (connectWiFi(0, APssid, APpassword)) {
-              return -1;
+    uint8_t wifiAttempts = 0;
+    while(WiFi.status() != WL_CONNECTED)  {
+      WiFi.begin(ssid, pswd);
+      delay(1000);
+      Serial.println("Connecting to WiFi...");
+      wifiAttempts++; 
+      //Serial.println(wifiAttempts, DEC);
+        //Reset ESP32 after 12 failed connection attempts
+          if (wifiAttempts > 5) {
+              Serial.println("Unable to connect. Switching to AP mode");
+              if (connectWiFi(0, APssid, APpassword)) {
+                return -1;
+                // Serial.println("Restarting");   //Can't restart because we will loss connection info from client
+                // ESP.restart();
+              }
             }
-          }
       }
   }
-  Serial.println("Connected to network");
 
-  tftWriteNetwork(ssid);
+  Serial.println("Connected to network");
+  tftWriteNetwork(ssid, mode);
   return 1;
 }
 
@@ -646,7 +651,7 @@ void tftSetup() {
 /********************************************
  * tftWriteNetwork(char ssid[])
 *********************************************/
-void tftWriteNetwork(char ssid[]) {
+void tftWriteNetwork(char ssid[], uint8_t mode) {
   Serial.println("tftWriteNetwork()");
     #ifdef DEBUG
     Serial.println("tftWriteNetwork()");
@@ -655,8 +660,11 @@ void tftWriteNetwork(char ssid[]) {
   tft.setCursor(30,50,1);
   tft.println(ssid);
   tft.setCursor(30,75,1);
-  tft.println(WiFi.localIP());
-
+  if (mode == 0) {  //AP Network
+    tft.println(WiFi.softAPIP());
+  } else {
+    tft.println(WiFi.localIP());
+  }
   Serial.println("TFT written");
 }
 /*

@@ -63,6 +63,7 @@ extern char APpassword[];
 extern Adafruit_VL53L0X toF;
 extern VL53L0X_RangingMeasurementData_t measure;
 extern TFT_eSPI tft;
+extern uint8_t byteCode;
 
 ///************************************
 //          Global Functions
@@ -76,7 +77,7 @@ extern accVector movingAvg(uint8_t vecIndex);
 extern uint8_t getDist(Adafruit_VL53L0X toF);
 extern uint8_t newNetConnect(uint8_t rxStr[50]);
 extern uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]);
-extern void tftWriteNetwork(char ssid[]);
+extern void tftWriteNetwork(char ssid[], uint8_t mode);
 extern void tftSetup();
 
 

@@ -70,8 +70,9 @@ int16_t socketTestData = 4040;
 
 uint8_t txIdx = SOCKPACKSIZE;
 uint8_t rxIdx = 1; //Size of data expected from client - almost always 1
+uint8_t byteCode;
 //uint8_t sockRxStrIdx = 0;
-//char bytes[SOCKPACKSIZE];      //Bytes size will be determined at run time - to accept arbitrary length strings
+char bytes[SOCKPACKSIZE];      //Bytes size will be determined at run time - to accept arbitrary length strings
 accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE]; //array of vector arrays 
 //accVector Acc1Vectors[accPacketSize];
 uint8_t sampleCount = 0;    //Counts number of samples for the moving average filter
@@ -123,8 +124,6 @@ void setup() {
 
   AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
 
-  Serial.println("Connected to the WiFi Network");
-  Serial.println(WiFi.localIP());
   wifiServer.begin();
   Serial.println("Started Wifi server");
   OTAserver.begin();  //server for OTA
@@ -143,9 +142,10 @@ void setup() {
   timerStart(timer1);
 
   //Find the I2C ports
-  // for (int i = 0; i < 9; i++) {
-  // accVecArray[0][sampleCount] = getAccAxes(7);
-  // }
+  for (uint8_t i = 0; i < 9; i++) {
+  //accVecArray[0][sampleCount] = getAccAxes(i);
+  readAccReg(i, 3);
+  }
 //   // #ifdef DEBUG
 //   //   Serial.print("Core: ");
 //   //   Serial.println(xPortGetCoreID());
@@ -157,7 +157,7 @@ void setup() {
 // *************************/
 void loop() {
 
-  char bytes[SOCKPACKSIZE];
+  //char bytes[SOCKPACKSIZE];
   txIdx = SOCKPACKSIZE; 
 
   if (vecCount == 0) {
@@ -168,24 +168,26 @@ void loop() {
  
   if (client) {
     while (client.connected()) {
-        //Serial.println("Client Connected");
+        Serial.println("Client Connected");
       while (client.available() > 0) {
         Serial.println("Client Available");
 
 //***************************************************************/
                        //Receive Data
 //***************************************************************/
-        uint8_t byteCode;
+        
         uint8_t rxStr[rxIdx];
-        if (rxIdx > 1) {
+        if (rxIdx == 1) {
+          byteCode = client.read();
+          Serial.println("rxIdx == 1 Should come here everytime...");
+        } else {
+          Serial.println("rxIdx != 1 Should conly be here when we write text...");
           //uint8_t rxStr[rxIdx];
           for (uint8_t k; k < rxIdx; k++) {
             rxStr[k] = client.read();
           }
-          uint8_t byteCode = 0x44;   //Tells the loop to process the network data received
-        // uint8_t txIdx = SOCKPACKSIZE;
-        } else {
-          uint8_t byteCode = client.read();
+          byteCode = 0x44;   //Tells the loop to process the network data received
+        // uint8_t txIdx = SOCKPACKSIZE; 
         }
 
         Serial.print("byteCode: ");
@@ -200,11 +202,11 @@ void loop() {
           //0F asks for sensor readings w/ ToF
           txIdx = SOCKPACKSIZE + 1;
           char bytes[SOCKPACKSIZE + 1];
-        } //else {
-        //   //All others jsut send SockPackSize
-        //   txIdx = SOCKPACKSIZE;
-        //   char bytes[SOCKPACKSIZE];
-        // }
+        } else {
+          //All others just send SockPackSize
+          txIdx = SOCKPACKSIZE;
+          char bytes[SOCKPACKSIZE];
+        }
 
         //Client wants ACC data
 //***************************************************************/
@@ -232,8 +234,8 @@ void loop() {
           while (sampleCount < MOVINGAVGSIZE) {
             uint32_t getDataStart = timerReadMicros(timer1);
             for (uint8_t i = 0; i < NUMSENSORS; i++) {
-              // Serial.print("Sensor: ");
-              // Serial.println(i, DEC);
+              Serial.print("Sensor: ");
+              Serial.println(i, DEC);
               uint8_t portNoShift = 0;
               switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
                 case 0:
@@ -273,8 +275,12 @@ void loop() {
             accVector AccVectorMAVG[NUMSENSORS];
             for (int i = 0; i < NUMSENSORS; i++) {   //One vector per sensor
               //vectortoBytes(accVecArray[i][0], i);  //Puts data into byte format for socket TX
-              AccVectorMAVG[i] = movingAvg(i);     
-              vectortoBytes(AccVectorMAVG[i], i);  //Puts data into byte format for socket TX
+              AccVectorMAVG[i] = movingAvg(i);  
+              //sensorIndex = sensorIndex*ACCPACKSIZE;
+              bytes[0 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].XAcc;
+              bytes[1 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].YAcc;
+              bytes[2 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].ZAcc;   
+              //vectortoBytes(AccVectorMAVG[i], i);  //Puts data into byte format for socket TX
             }
             uint32_t MvgAvgEnd = timerReadMicros(timer1);
             Serial.print("Moving Avg Time Micros: ");
@@ -392,25 +398,9 @@ void loop() {
           //TODO 
           //Call function to parse the data out and reconnect
           if (newNetConnect(rxStr)) {
-            Serial.println("Successfully reconnected!");
-            //Prep acknowledgement code
-            bytes[0] = 0x0F;
-            bytes[1] = 0xFF;
-            for (int i = 2; i < txIdx; i++) {
-              bytes[i] = 0;
-            }
             //Reset Variables 
             rxIdx = 1;
           }
-
-          //Prep acknowledgement code
-          bytes[0] = 0x0F;
-          bytes[1] = 0xFF;
-          for (int i = 2; i < txIdx; i++) {
-            bytes[i] = 0;
-          }
-          //Reset Variables 
-          rxIdx = 1;
       }
 
 
@@ -439,7 +429,7 @@ void loop() {
 //***************************************************************/
                        //Send Data
 //***************************************************************/
-      if (byteCode != 0x44) {   //Don't need to send data after changing network
+      if ((byteCode == 0xFF || byteCode == 0x0F || byteCode == 0x22)) {   //Don't need to send data after changing network
         uint8_t bytesSent = 0;
         for(int i = 0; i < txIdx; i++) {
           uint8_t byte = client.write(bytes[i]);
