@@ -266,30 +266,30 @@ void loop() {
             Serial.println(getDataEnd - getDataStart);
             sampleCount++;
           }
-          Serial.print("accVecArray[0][2]: ");
-          Serial.println(accVecArray[0][2].XAcc, DEC);
-          Serial.print("accVecArray[2][4]: ");
-          Serial.println(accVecArray[2][4].YAcc, DEC);
-          Serial.print("accVecArray[0][2]: ");
-          Serial.println(accVecArray[0][2].XAcc, DEC);
-          Serial.print("accVecArray[1][2]: ");
-          Serial.println(accVecArray[1][2].ZAcc, DEC);
+          // Serial.print("accVecArray[0][2]: ");
+          // Serial.println(accVecArray[0][2].XAcc, DEC);
+          // Serial.print("accVecArray[2][4]: ");
+          // Serial.println(accVecArray[2][4].YAcc, DEC);
+          // Serial.print("accVecArray[0][2]: ");
+          // Serial.println(accVecArray[0][2].XAcc, DEC);
+          // Serial.print("accVecArray[1][2]: ");
+          // Serial.println(accVecArray[1][2].ZAcc, DEC);
 //***************************************************************/
                        //Moving Average
 //***************************************************************/
           uint32_t MvgAvgStart = timerReadMicros(timer1);
           if (sampleCount == MOVINGAVGSIZE) {        //After moving average size of samples (3) filter
             accVector AccVectorMAVG[NUMSENSORS];
-            for (int i = 0; i < NUMSENSORS; i++) {   //One vector per sensor
+            for (uint8_t b = 0; b < NUMSENSORS; b++) {   //One vector per sensor
               //vectortoBytes(accVecArray[i][0], i);  //Puts data into byte format for socket TX
               //Serial.print("movingAvg sensor: ");
               //Serial.println(i, DEC);
-              AccVectorMAVG[i] = movingAvg(i);  
+              AccVectorMAVG[b] = movingAvg(b);  
               //sensorIndex = sensorIndex*ACCPACKSIZE;
               
-              bytes[0 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].XAcc; //0 + (3*3) = 9 
-              bytes[1 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].YAcc;
-              bytes[2 + (i*ACCPACKSIZE)] = AccVectorMAVG[i].ZAcc;   
+              bytes[0 + (b*ACCPACKSIZE)] = AccVectorMAVG[b].XAcc; //0 + (3*3) = 9 
+              bytes[1 + (b*ACCPACKSIZE)] = AccVectorMAVG[b].YAcc;
+              bytes[2 + (b*ACCPACKSIZE)] = AccVectorMAVG[b].ZAcc;   
               //vectortoBytes(AccVectorMAVG[i], i);  //Puts data into byte format for socket TX
             }
             uint32_t MvgAvgEnd = timerReadMicros(timer1);
