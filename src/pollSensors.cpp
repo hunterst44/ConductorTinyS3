@@ -59,9 +59,9 @@ vectortoBytes(accVector vector, uint8_t sensorIndex) -- makes byte array for TX
 
 accVector getAccAxes(uint8_t Port) {
  //Read Axes of Acc1
-    Serial.println();
-    Serial.print("accVector getAccAxes(), Port: ");
-    Serial.println(Port, DEC);
+    // Serial.println();
+    // Serial.print("accVector getAccAxes(), Port: ");
+    // Serial.println(Port, DEC);
 
   // Serial.println();
     
@@ -159,8 +159,8 @@ accVector getAccAxes(uint8_t Port) {
 
 int16_t readAccReg(uint8_t Port, uint8_t r) {
 
-    Serial.println();
-    Serial.println("readAccReg(uint8_t Port, int r)");
+    // Serial.println();
+    // Serial.println("readAccReg(uint8_t Port, int r)");
     // Serial.println();
     // Serial.print("readAccReg(uint8_t Port, int r), TxCount:");
     // Serial.println(txCount, DEC);
@@ -205,8 +205,8 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
   Wire.beginTransmission(MXCI2CADDR);    //Open TX with start address and stop
   Wire.write(r);                  //Send the register we want to read to the sensor
   
-  Serial.print("r transmitted: ");
-  Serial.println(r, HEX);
+  // Serial.print("r transmitted: ");
+  // Serial.println(r, HEX);
 
   #ifdef DEBUG
     Serial.print("r transmitted: ");
@@ -216,8 +216,8 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
   uint8_t error = Wire.endTransmission();  //Send a stop
       if (error == 0) {
 
-        Serial.print("I2C device found at address 0x15 using port ");
-        Serial.println(Port, DEC);
+        //Serial.print("I2C device found at address 0x15 using port ");
+        //Serial.println(Port, DEC);
         #ifdef DEBUG
           Serial.print("I2C device found at address 0x15\n");
         #endif /*DEBUG*/
@@ -237,8 +237,8 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
     while(Wire.available()) {
       regOut = Wire.read();
 
-      Serial.print("Register Output: ");
-      Serial.println(regOut, HEX);
+      // Serial.print("Register Output: ");
+      // Serial.println(regOut, HEX);
 
       #ifdef DEBUG
         Serial.print("Register Output: ");
@@ -431,7 +431,7 @@ void vectortoBytes(accVector vector, uint8_t sensorIndex) {
 *********************************************/
 accVector movingAvg(uint8_t sensorIndex) {
   
-  // Serial.println("movingAvg");
+  //Serial.println("movingAvg");
   //   Serial.print("TX number: ");
   //   Serial.println(txCount, DEC);
   //   Serial.println("Sensor: ");
@@ -510,7 +510,6 @@ accVector movingAvg(uint8_t sensorIndex) {
     Serial.print("movingAvgVect.ZAcc: ");
     Serial.println(movingAvgVect.ZAcc, DEC);
   #endif /*DEBUG*/
-
 
   return movingAvgVect;
 }

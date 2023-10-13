@@ -26,7 +26,7 @@
 #define ZOUTHI 0x07 
 #define ZOUTLO 0x08 
 //#define accPacketSize 500     //Size of a unit of acc samples
-#define NUMSENSORS 2       //Number of sensors
+#define NUMSENSORS 4       //Number of sensors
 #define ACCPACKSIZE 3     //Size in bytes to send a sample from 1 accelerometer
 #define SOCKPACKSIZE 6   //Total size of packet set to socket client (ACCPACKSIZE * number of sensors) 
 #define MOVINGAVGSIZE 5   //Number samples to include in moving average [12.5ms * 8 = 100ms]
@@ -51,7 +51,7 @@ struct accVector {
 
 extern hw_timer_t * timer1;
 extern uint8_t I2CPort;
-extern char bytes[SOCKPACKSIZE];
+extern char bytes[SOCKPACKSIZE + 1];
 extern accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE];
 extern uint8_t txCount;
 extern uint8_t sampleCount;
