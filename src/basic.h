@@ -2,6 +2,8 @@
 #include <TFT_eSPI.h>
 #include <AsyncElegantOTA.h>
 #include <ESPAsyncWebServer.h>
+#include "secrets.h"
+#include <SPIFFS.h>
 
 // ----------------------------------------------------------------------------
 // Definition of macros
@@ -37,6 +39,13 @@
 ///************************************
 //          Data Globals
 //*************************************
+
+struct CntInfo {
+    uint8_t cntMode;
+    String ssid;
+    String pswd;
+};
+
 
 // extern uint8_t state;
 // extern uint8_t debug; 
@@ -79,6 +88,8 @@ extern uint8_t newNetConnect(uint8_t rxStr[50]);
 extern uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]);
 extern void tftWriteNetwork(char ssid[], uint8_t mode);
 extern void tftSetup();
+extern uint8_t writeNetworkSpiffs(CntInfo cntInfo);
+extern CntInfo getNetworkSpiffs();
 
 
 //**********************************

@@ -38,6 +38,7 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 #include <SPI.h>
 #include <ESP32Ping.h>
 
+
 uint8_t testCount = 0;
 
 // // Create AsyncWebServer object on port 80
@@ -102,6 +103,10 @@ void setup() {
    #ifdef DEBUG
     Serial.println("I am alive!");
   #endif /*DEBUG*/
+
+  if(!SPIFFS.begin(true)){
+    Serial.println("An Error has occurred while mounting SPIFFS");
+  }
   
   Wire.begin(I2C_SDA, I2C_SCL);
 
@@ -119,8 +124,59 @@ void setup() {
 
   tftSetup();
 
-  //To Start connect in AP mode
-  connectWiFi(0, APssid, APpassword);
+  //Wifi stuff
+  WiFi.mode(WIFI_MODE_APSTA);
+  WiFi.setAutoReconnect(true);
+  //Check cnt.txt to see if there is a saved network connection
+  
+  CntInfo cntInfo = getNetworkSpiffs();
+  if (cntInfo.cntMode == 1) {
+    //1 means reconnect to this network
+    //convert infos to char arrays
+    size_t ssidLen = cntInfo.ssid.length();
+    char ssidArr[ssidLen-1];
+    for (uint8_t h; h < ssidLen-1; h++) {
+      ssidArr[h] = cntInfo.ssid[h];
+      Serial.print(ssidArr[h]);
+    } 
+    Serial.println(' ');
+    //cntInfo.ssid.getBytes(ssidArr, ssidLen);
+    size_t pswdLen = cntInfo.pswd.length();
+    char pswdArr[pswdLen-1]; 
+    for (uint8_t g; g < pswdLen-1; g++) {
+      pswdArr[g] = cntInfo.pswd[g];
+      Serial.print(pswdArr[g]);
+    } 
+    Serial.println(' ');
+    //cntInfo.ssid.getBytes(pswdArr, pswdLen);
+    connectWiFi(cntInfo.cntMode, ssidArr, pswdArr);
+  } else {
+    //Connect in AP mode
+    cntInfo.cntMode = 0;
+    // cntInfo.pswd = APPASS;
+    // cntInfo.ssid = APNETWORK;
+    connectWiFi(0, APNETWORK, APPASS);
+  }
+
+// CntInfo cntInfo;
+// cntInfo.cntMode = 1;
+// cntInfo.ssid = NETWORK;
+// cntInfo.pswd = PASS;
+// Serial.print("cntInfo.ssid: ");
+// Serial.println(cntInfo.ssid);
+// Serial.print("cntInfo.pswd: ");
+// Serial.println(cntInfo.pswd);
+// if (writeNetworkSpiffs(cntInfo) == 1) {
+//   Serial.println("Wrote to Spiffs");
+// } else {
+//   Serial.print("Spiffs write error");
+// }
+
+// CntInfo newinfos = getNetworkSpiffs();
+
+  
+  //WiFi.begin(NETWORK, PASS);
+  // connectWiFi(0, APssid, APpassword);
 
   AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
 
@@ -186,10 +242,10 @@ void loop() {
           
           for (uint8_t k; k < rxIdx; k++) {
             rxStr[k] = client.read();
-            Serial.print("rxStr[");
-            Serial.print(k, DEC);
-            Serial.print("]: ");
-            Serial.println(rxStr[k], HEX);
+            // Serial.print("rxStr[");
+            // Serial.print(k, DEC);
+            // Serial.print("]: ");
+            // Serial.println(rxStr[k], HEX);
           }
           // Serial.print("rxStr[0]: ");
           // Serial.println(rxStr[0], HEX);
@@ -418,8 +474,8 @@ void loop() {
           //Received network infos from client
           //TODO 
           //Call function to parse the data out and reconnect
-          Serial.print("rxStr[0]: ");
-          Serial.println(rxStr[0], HEX);
+          // Serial.print("rxStr[0]: ");
+          // Serial.println(rxStr[0], HEX);
           if (newNetConnect(rxStr)) {
             //Reset Variables 
             rxIdx = 1;

@@ -525,8 +525,8 @@ uint8_t newNetConnect(uint8_t rxStr[50]) {
     #endif /*DEBUG*/
 
     if (rxStr[0] == 0x42) {
-    Serial.print("rxStr[0]: ");
-    Serial.println(rxStr[0], HEX);
+    // Serial.print("rxStr[0]: ");
+    // Serial.println(rxStr[0], HEX);
     }
     uint8_t gotSSID = 0;
     uint8_t gotPSWD = 0;
@@ -535,53 +535,85 @@ uint8_t newNetConnect(uint8_t rxStr[50]) {
     char tmpSSID[50];
     char tmpPSWD[50];
     for (int z = 0; z < 50; z++) {
-      if (gotSSID = 0) {
+      //Serial.print("rxStr[z]: ");
+      //Serial.println(rxStr[z], HEX);
+      if (gotSSID == 0) {
+        // Serial.print("rxStr[z]: ");
+        // Serial.println(rxStr[z], HEX);
         //Need better checking here...
-        if (rxStr[z] != 0x5F) { 
-        tmpSSID[SSIDLength] = rxStr[z];
-        Serial.print("Found Character");
-        Serial.println(tmpSSID[z], HEX);
-        SSIDLength++;
-
-        //"__--__"
-        } else if (rxStr[z+1] != 0x5F && rxStr[z+2] == 0x5F && rxStr[z+3] == 0x2D && rxStr[z+4] == 0x2D && rxStr[z+5] == 0x5F && rxStr[z+6] == 0x5F) {
-          Serial.print("Got SSID");
+        if (rxStr[z] == 0x5F && rxStr[z+1] == 0x5F && rxStr[z+2] == 0x2D && rxStr[z+3] == 0x2D && rxStr[z+4] == 0x5F && rxStr[z+5] == 0x5F) {
+          Serial.println("Got SSID");
           gotSSID = 1;
+          z = z + 5;
+        } else {
+          tmpSSID[SSIDLength] = rxStr[z];
+          Serial.print("Found Character (SSID): ");
+          Serial.println(rxStr[z], HEX);
+          SSIDLength++;
         }
-      } else if (gotPSWD == 0) {
-        if (rxStr[z] != '_') {
-        tmpPSWD[PSWDLength] = rxStr[z];
-        PSWDLength++;
-        } else if (rxStr[z+1] != 0x5F && rxStr[z+2] == 0x5F && rxStr[z+3] == 0x2D && rxStr[z+4] == 0x2D && rxStr[z+5] == 0x5F && rxStr[z+6] == 0x5F) {
-          Serial.print("Got PSWD");
+        //"__--__"
+       
+      } else if (gotPSWD == 0 and gotSSID == 1) {
+        if (rxStr[z] == 0x5F && rxStr[z+1] == 0x5F && rxStr[z+2] == 0x2D && rxStr[z+3] == 0x2D && rxStr[z+4] == 0x5F && rxStr[z+5] == 0x5F) {
+          Serial.println("Got PSWD");
           gotPSWD = 1;
           break;
         }
+        else {
+        tmpPSWD[PSWDLength] = rxStr[z];
+        Serial.print("Found Character (PSWD)");
+        Serial.println(rxStr[z], HEX);
+        PSWDLength++;
+        }
       }
     }
+      Serial.print("SSIDLength: ");
+      Serial.println(SSIDLength, DEC);
+      Serial.print("PSWDLength: ");
+      Serial.println(PSWDLength, DEC);
       char newSSID[SSIDLength + 1];
       char newPSWD[PSWDLength + 1];
       Serial.print("newSSID: ");
+
+      CntInfo cntInfo;    //Structure for writing connection data to spiffs
+      cntInfo.cntMode = 1;
+
       for (int i = 0; i < SSIDLength; i++) {
         newSSID[i] = tmpSSID[i];
+        cntInfo.ssid = cntInfo.ssid + tmpSSID[i];
         Serial.print(newSSID[i]);
-        Serial.println("");
         //Serial.print(newSSID[i], CHAR);
       }
+      Serial.println("");
 
       Serial.print("newPSWD: ");
-      for (int j = 0; j < SSIDLength; j++) {
+      for (int j = 0; j < PSWDLength; j++) {
         newPSWD[j] = tmpPSWD[j];
+        cntInfo.pswd = cntInfo.pswd + tmpPSWD[j];
         Serial.print(newPSWD[j]);
-        Serial.println("");
       }
+      Serial.println("");
 
       Serial.println("Got new connection information. Reconnecting...");
-      if (connectWiFi(1, newSSID, newPSWD)) {
+      //write the new infos to spiffs sos we can connect after restart
+      
+      Serial.println("Write network info to Spiffs: ");
+      Serial.println(cntInfo.cntMode, DEC);
+      Serial.println(cntInfo.ssid);
+      Serial.println(cntInfo.pswd);
+
+      writeNetworkSpiffs(cntInfo);
+
+      if (connectWiFi(1, newSSID, newPSWD) == 1) {
         Serial.println("Connection Successful");
+        Serial.print("IP: ");
+        Serial.println(WiFi.localIP());
         return 1;
+        
       } else {
         Serial.println("Connection Failed");
+        Serial.print("IP: ");
+        Serial.println(WiFi.localIP());
         return -1;
       }
     }
@@ -590,48 +622,82 @@ uint8_t newNetConnect(uint8_t rxStr[50]) {
  * connectWiFi(uint8_t mode, char ssid[], char pswd[])
 *********************************************/
 uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]) {
+   Serial.println("");
    Serial.println("connectWiFi()");
     #ifdef DEBUG
     Serial.println("connectWiFi()");
    #endif /*DEBUG*/
 
-  char ip[] = "0.0.0.0";
-
-  if (WiFi.status() == WL_CONNECTED) {
-    WiFi.disconnect();
-    Serial.println("Disconnected");
-  }  
+  char ip[] = "0.0.0.0"; 
 
   if (mode == 0) {   //Ap mode (start up)
-      WiFi.mode(WIFI_AP);
-      Serial.println("Creating AP network");
-      WiFi.softAP(ssid, pswd); 
-      Serial.print("Connected: ");
+    Serial.println("Creating AP network");
+    //WiFi.begin(NETWORK, PASS);
+    //delay(1000);
+    //Serial.print("IP: ");
+    //Serial.println(WiFi.localIP());
+    WiFi.softAP(ssid, pswd);
+    Serial.println("Connected mode 0");
+    
+      // if (WiFi.getMode() == WIFI_MODE_AP) {
+         
+      //   Serial.println("Connected");
       Serial.println(WiFi.softAPIP());
-      //char ip[] = WiFi.softAPIP();
+      // } else {
+      //     WiFi.mode(WIFI_AP);
+      //     WiFi.softAP(ssid, pswd); 
+      //     Serial.println("Connected");
+      // }
   } else if (mode == 1) {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, pswd);
-  
+    if (WiFi.status() == WL_CONNECTED) {
+      WiFi.disconnect();
+      Serial.println("Disconnected");
+    } 
+        WiFi.begin(ssid, pswd);
+        
+        // WiFi.begin(NETWORK, PASS);
+        delay(1000);
+        Serial.print("IP: ");
+        Serial.println(WiFi.localIP());
+        
+    // } else {
+    //   Serial.println("Disconnect from AP network");
+    //   //WiFi.disconnect();
+    //   WiFi.enableSTA(true);
+      
+
+    //   if (WiFi.getMode() == WIFI_MODE_STA) {
+    //     Serial.println("Now in station mode.");
+    //     WiFi.begin(NETWORK, PASS);
+    //     WiFi.setAutoReconnect(true);
+    //   }
+    //}
     uint8_t wifiAttempts = 0;
     while(WiFi.status() != WL_CONNECTED)  {
-      WiFi.begin(ssid, pswd);
+      Serial.print("ssid: ");
+      Serial.println(ssid);
+      Serial.print("pswd: ");
+      Serial.println(pswd);
+
+      //WiFi.begin(ssid, pswd);
+      //WiFi.begin(NETWORK, PASS);
       delay(1000);
-      Serial.println("Connecting to WiFi...");
+      
       wifiAttempts++; 
       //Serial.println(wifiAttempts, DEC);
         //Reset ESP32 after 12 failed connection attempts
           if (wifiAttempts > 5) {
-              Serial.println("Unable to connect. Switching to AP mode");
-              if (connectWiFi(0, APssid, APpassword)) {
-                return -1;
-                // Serial.println("Restarting");   //Can't restart because we will loss connection info from client
-                // ESP.restart();
-              }
+              Serial.println("Unable to connect. Restarting");
+              // if (connectWiFi(0, APssid, APpassword)) {
+              //   return 1;
+              //   // Serial.println("Restarting");   //Can't restart because we will loss connection info from client
+              ESP.restart();
+              // } else {
+              return -1;
+              //}
             }
       }
-  }
-
+   }
   Serial.println("Connected to network");
   tftWriteNetwork(ssid, mode);
   return 1;
@@ -674,6 +740,72 @@ void tftWriteNetwork(char ssid[], uint8_t mode) {
     tft.println(WiFi.localIP());
   }
   Serial.println("TFT written");
+}
+
+CntInfo getNetworkSpiffs() {
+  Serial.println("");
+  Serial.println("getNetworkSpiffs()");
+  CntInfo cntInfo;
+  File file = SPIFFS.open("/cnt.txt");
+  if(!file){
+      Serial.println("Failed to open file for reading");
+      cntInfo.cntMode = -1;
+      return cntInfo;
+   }  
+  String modeStr;
+  uint8_t county = 0;
+  
+  while(file.available()) {
+    
+    // Serial.print("Whole file: ");
+    // Serial.println(file.read());
+    if (county == 0) {
+      modeStr = file.readStringUntil('\n');
+      Serial.print("modeStr: ");
+      Serial.println(modeStr);
+      if (modeStr[0] == '0') {
+        cntInfo.cntMode = 0;
+      } else if (modeStr[0] == '1') {
+        cntInfo.cntMode = 1;
+      } 
+      county++;
+    }
+
+    if (county == 1) {
+    cntInfo.ssid = file.readStringUntil('\n');
+    county++;
+    } else {
+      cntInfo.pswd = file.readStringUntil('\n');
+    }
+  }
+    Serial.print("SSID: ");
+    Serial.println(cntInfo.ssid);
+
+    Serial.print("pswd: ");
+    Serial.println(cntInfo.pswd);
+  file.close();
+  return cntInfo;
+}
+
+uint8_t writeNetworkSpiffs(CntInfo cntInfo) {
+    //Get the existing info
+    CntInfo oldCntInfo = getNetworkSpiffs();
+    
+    if (oldCntInfo.cntMode != -1) {
+    File file = SPIFFS.open("/cnt.txt", FILE_WRITE);
+    if(!file){
+      Serial.println("Failed to open file for reading");
+      return -1;
+      }
+    //String newInfo = cntInfo.cntMode + "/n" + cntInfo.ssid + "/n" + cntInfo.pswd + "\n";   
+
+      file.println(cntInfo.cntMode);
+      file.println(cntInfo.ssid);
+      file.println(cntInfo.pswd);
+      return 1; 
+    } else {
+      return -1;
+    }
 }
 /*
 MXC4005XC-B Accelerometer I2C requirements:
