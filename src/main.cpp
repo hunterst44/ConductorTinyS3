@@ -130,11 +130,17 @@ void setup() {
   //Check cnt.txt to see if there is a saved network connection
   
   CntInfo cntInfo = getNetworkSpiffs();
+  Serial.println(cntInfo.cntMode);
   if (cntInfo.cntMode == 1) {
     //1 means reconnect to this network
     //convert infos to char arrays
     size_t ssidLen = cntInfo.ssid.length();
     char ssidArr[ssidLen-1];
+    if (cntInfo.ssid[0] == 'T' && cntInfo.ssid[1] == 'h' && cntInfo.ssid[2] == 'e' && cntInfo.ssid[3] == 'C' && cntInfo.ssid[4] == 'o' && cntInfo.ssid[5] == 'n' && cntInfo.ssid[6] == 'd' && cntInfo.ssid[7] == 'u' && cntInfo.ssid[8] == 'c') {
+      Serial.println("softAp enabled");
+      cntInfo.cntMode = 0;
+    }
+
     for (uint8_t h; h < ssidLen-1; h++) {
       ssidArr[h] = cntInfo.ssid[h];
       Serial.print(ssidArr[h]);

@@ -780,7 +780,6 @@ CntInfo getNetworkSpiffs() {
   }
     Serial.print("SSID: ");
     Serial.println(cntInfo.ssid);
-
     Serial.print("pswd: ");
     Serial.println(cntInfo.pswd);
   file.close();
