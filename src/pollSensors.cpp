@@ -24,34 +24,97 @@ vectortoBytes(accVector vector, uint8_t sensorIndex) -- makes byte array for TX
 // #include <math.h>
 // #include "Adafruit_VL53L0X.h"
 
-
 /************************
- * getDist()
+ * initACC()
 *************************/
+void initACC() {
+  uint8_t ACCStatusReg;
+  //Initilize the MC3416 sensors
+  for (int i=0; i < NUMSENSORS; i++) {
+    uint8_t portNoShift = 0;
+    switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
+      case 0:
+        portNoShift = 7;
+        break;
+      case 1:
+        portNoShift = 0;
+      case 2:
+        portNoShift = 4;
+        break;
+      case 3:
+        portNoShift = 5;
+        break;
+      default:
+        portNoShift = 7;
+    }
 
-// uint8_t getDist(Adafruit_VL53L0X toF) {
+    changeI2CPort(portNoShift);
+    //Set mode, Enable Watchdog
+    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+    Wire.write(0x07);                  //mode register 0x07
+    Wire.write(0x01);                  //Send 0x01 for watch dog and interrupt disabled, mode = WAKE
 
-//   Serial.println();
-//   Serial.print("Get distance");
-//   Serial.println();
+    uint8_t error = Wire.endTransmission();  //Send a stop
+      if (error == 0) {
 
-//   toF.getSingleRangingMeasurement(&measure, true);
-//   //Wire.begin(I2C_SDA, I2C_SCL);
+        //Serial.print("I2C device found at address 0x15 using port ");
+        //Serial.println(Port, DEC);
+        #ifdef DEBUG
+          Serial.print("I2C device found at address 0x15\n");
+        #endif /*DEBUG*/
 
-//   //uint8_t dist = getDist(toF, measure);    //Get a distance measurement from the Tof sensor
-//   uint16_t dist16 = measure.RangeMilliMeter;
+      } else {
+          Serial.print("I2C Error writing to register 7 (mode register): ");
+          Serial.println(error,HEX);
+          #ifdef DEBUG
+            
+            Serial.print("I2C Error: ");
+            Serial.println(error,HEX);
+          #endif /*DEBUG*/
+      }
 
-//   Serial.print("raw distance: ");
-//   Serial.println(dist16, HEX);
+    //Check the status register
+    ACCStatusReg = readAccReg(portNoShift, 0x05);
+    if (ACCStatusReg == 0x01) {
+      Serial.print('Sensor ');
+      Serial.print(i,DEC);
+      Serial.print(' Status OK');
+    }
 
-//   uint8_t dist = (uint8_t) ((dist16) >> 8 );
+    //set sample rate
+    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+    Wire.write(0x08);                  //sample rate register 0x08
+    Wire.write(0x05);                  //Send 0x05 for max speed (1024 samples / second)
 
-//   Serial.print("Scaled istance: ");
-//   Serial.println(dist, HEX);
+    uint8_t error = Wire.endTransmission();  //Send a stop
+      if (error == 0) {
 
-//   return dist;
+        //Serial.print("I2C device found at address 0x15 using port ");
+        //Serial.println(Port, DEC);
+        #ifdef DEBUG
+          Serial.print("I2C device found at address 0x15\n");
+        #endif /*DEBUG*/
 
-// }
+      } else {
+          Serial.print("I2C Error writing to register 8 (sample rate): ");
+          Serial.println(error,HEX);
+          #ifdef DEBUG
+            
+            Serial.print("I2C Error: ");
+            Serial.println(error,HEX);
+          #endif /*DEBUG*/
+      }
+
+      //Check the status register
+      ACCStatusReg = readAccReg(portNoShift, 0x05);
+      if (ACCStatusReg == 0x05) {
+        Serial.print('Sensor ');
+        Serial.print(i,DEC);
+        Serial.print(' sample rate set to 1024 samples/second');
+      }
+
+  }
+}
 
 /************************
  * getAccAxes()
@@ -75,7 +138,7 @@ accVector getAccAxes(uint8_t Port) {
 
     //Get X register values
     //XHi
-    int16_t XHi = readAccReg(Port, 3);
+    int16_t XHi = readAccReg(Port, 0x0E);
 
     #ifdef DEBUG
       Serial.print("XHi: ");
@@ -83,7 +146,7 @@ accVector getAccAxes(uint8_t Port) {
     #endif /*DEBUG*/
 
     //XLo  
-    int16_t XLo = readAccReg(Port, 4);
+    int16_t XLo = readAccReg(Port, 0x0D);
 
     #ifdef DEBUG
       Serial.print("XLo: ");
@@ -101,7 +164,7 @@ accVector getAccAxes(uint8_t Port) {
 
     //Get Y register values
     //YHi
-    int16_t YHi = readAccReg(Port, 5);
+    int16_t YHi = readAccReg(Port, 0x10);
 
     #ifdef DEBUG
       Serial.print("YHi: ");
@@ -109,7 +172,7 @@ accVector getAccAxes(uint8_t Port) {
     #endif /*DEBUG*/
 
     //YLo  
-    int16_t YLo = readAccReg(Port, 6);
+    int16_t YLo = readAccReg(Port, 0x0F);
 
     #ifdef DEBUG
       Serial.print("YLo: ");
@@ -127,7 +190,7 @@ accVector getAccAxes(uint8_t Port) {
 
     //Get Z register values
     //Zi  
-    int16_t ZHi = readAccReg(Port, 7);
+    int16_t ZHi = readAccReg(Port, 0x12);
 
     #ifdef DEBUG
       Serial.print("ZHi: ");
@@ -135,7 +198,7 @@ accVector getAccAxes(uint8_t Port) {
     #endif /*DEBUG*/
 
     //ZLo  
-    int16_t ZLo = readAccReg(Port, 8);
+    int16_t ZLo = readAccReg(Port, 0x11);
 
     #ifdef DEBUG
       Serial.print("ZLo: ");
@@ -158,19 +221,6 @@ accVector getAccAxes(uint8_t Port) {
 ****************************************/
 
 int16_t readAccReg(uint8_t Port, uint8_t r) {
-
-    // Serial.println();
-    // Serial.println("readAccReg(uint8_t Port, int r)");
-    // Serial.println();
-    // Serial.print("readAccReg(uint8_t Port, int r), TxCount:");
-    // Serial.println(txCount, DEC);
-    // Serial.print("sensor:");
-    // Serial.println(Port, DEC);
-    // Serial.print("sampleCount:");
-    // Serial.println(sampleCount, DEC);
-    // Serial.print("register:");
-    // Serial.println(r, DEC);
-
 
   #ifdef DEBUG
     Serial.println();
@@ -202,7 +252,7 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
     Serial.println("Send Device Address then register address (r)");
   #endif /*DEBUG*/
 
-  Wire.beginTransmission(MXCI2CADDR);    //Open TX with start address and stop
+  Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
   Wire.write(r);                  //Send the register we want to read to the sensor
   
   // Serial.print("r transmitted: ");
@@ -233,7 +283,7 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
           //return -1;
       }
 
-    Wire.requestFrom(MXCI2CADDR, 1, 1);   //Send read request
+    Wire.requestFrom(MC3416I2CADDR, 1, 1);   //Send read request
     while(Wire.available()) {
       regOut = Wire.read();
 
@@ -271,9 +321,66 @@ void changeI2CPort(uint8_t I2CPort) {   //Change the port of the I2C multiplexor
 
 /********************************************
  * getAxisAcc(int16_t axisHi, int16_t axisLo)
+ * Use with MC3416 Accelerometer (current version)
 *********************************************/
 
 int16_t getAxisAcc(int16_t axisHi, int16_t axisLo) {
+
+  // Serial.println("getAxisAcc(int16_t axisHi, int16_t axisLo)");
+  //   Serial.print("axisAccHi First: ");
+  //   Serial.println(axisHi, DEC);
+  //   Serial.print("axisAccLo First: ");
+  //   Serial.println(axisLo, DEC);
+  #ifdef DEBUG
+    Serial.println();
+    Serial.println("getAxisAcc(int16_t axisHi, int16_t axisLo)");
+    Serial.print("axisAccHi First: ");
+    Serial.println(axisHi, HEX);
+    Serial.print("axisAccLo First: ");
+    Serial.println(axisLo, HEX);
+  #endif /*DEBUG*/
+
+    int16_t axisAcc = (axisHi << 8) + axisLo;  //Shift the MSB and then add the LSB
+
+    #ifdef DEBUG
+      Serial.print("axisAccHi Shift: ");
+      Serial.println(axisAcc, HEX);
+    #endif /*DEBUG*/
+    
+    //axisAcc = axisAcc + (axisLo >> 4);
+    
+    // Serial.print("axisAccLo: ");
+    //   Serial.println((axisLo >> 4), HEX);
+    //   Serial.print("axisAcc: ");
+    //   Serial.println(axisAcc, HEX);
+    //   Serial.println();
+    #ifdef DEBUG
+      Serial.print("axisAccLo: ");
+      Serial.println((axisLo >> 4), HEX);
+      Serial.print("axisAcc: ");
+      Serial.println(axisAcc, HEX);
+      Serial.println();
+    #endif /*DEBUG*/
+
+    // Serial.print("axisAcc: ");
+    // Serial.println(axisAcc, DEC);
+    
+    //int8_t axisAccScaled = axisAcc / 16;   //Divide 16 to reduce 12 bit signed 12 bit int (+-2047) to a signed 8bit int (+-127)
+
+    Serial.print("axisAcc: ");
+    Serial.println(axisAcc, DEC);
+    Serial.println();
+
+    return axisAcc;                  //Return single byte value
+  }
+
+
+/********************************************
+ * getAxis12BitAcc(int16_t axisHi, int16_t axisLo)
+ * Use with MXC400 Accelerometer (depreciated)
+*********************************************/
+
+int16_t getAxis12BitAcc(int16_t axisHi, int16_t axisLo) {
 
   // Serial.println("getAxisAcc(int16_t axisHi, int16_t axisLo)");
   //   Serial.print("axisAccHi First: ");
@@ -336,7 +443,7 @@ int16_t getAxisAcc(int16_t axisHi, int16_t axisLo) {
     // Serial.println(axisAcc, DEC);
     
     
-    int8_t axisAccScaled = axisAcc / 16;   //Divide 16 to reduce 12 but signed 12 bit int (+-2047) to a signed 8bit int (+-127)
+    int8_t axisAccScaled = axisAcc / 16;   //Divide 16 to reduce 12 bit signed 12 bit int (+-2047) to a signed 8bit int (+-127)
 
     // Serial.print("axisAccScaled: ");
     // Serial.println(axisAccScaled, DEC);

@@ -16,6 +16,7 @@
 #define I2C_SDA 8     //I2C pins
 #define I2C_SCL 9
 #define MXCI2CADDR 0x15   //I2C Address for MXC400 Accelerometer
+#define MC3416I2CADDR 0x4C   //I2C Address for MC3416 Accelerometer (Assuming VPP is at GND on start up)
 #define VL53L0XADDR 0x29  //I2C Address for VL53L0X Time of flight sensor
 // #define AccPort1 1        //Ports for Accelerometer 1 (for multiplexor)
 // #define AccPort2 2
@@ -90,6 +91,7 @@ extern void tftWriteNetwork(char ssid[], uint8_t mode);
 extern void tftSetup();
 extern uint8_t writeNetworkSpiffs(CntInfo cntInfo);
 extern CntInfo getNetworkSpiffs();
+extern void initACC();
 
 
 //**********************************

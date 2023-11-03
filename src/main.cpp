@@ -122,6 +122,8 @@ void setup() {
   toF.configSensor(toF.VL53L0X_SENSE_LONG_RANGE);  //Set to long range
   toFReady = 1;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
 
+  initACC(); //Set up accelerometers
+
   tftSetup();
 
   //Wifi stuff
@@ -322,7 +324,7 @@ void loop() {
                   portNoShift = 7;
               }
               //For breadboard prototype - hit the sensor at port 7 NUMSENSORS times
-              portNoShift = 7;
+              //portNoShift = 7;
               accVecArray[i][sampleCount] = getAccAxes(portNoShift); //Use when their is only one sensor. Reads the same sensor over and over
               //USE this line with more than one sensor //accVecArray[i][sampleCount] = getAccAxes(i+1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
               // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
