@@ -31,10 +31,10 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 #include <stdlib.h>
 #include "secrets.h"
 #include <math.h>
-#include <AsyncElegantOTA.h>
-#include <ESPAsyncWebServer.h>
+// #include <AsyncElegantOTA.h>
+// #include <ESPAsyncWebServer.h>
 //#include "Adafruit_VL53L0X.h"
-#include <TFT_eSPI.h>
+// #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <ESP32Ping.h>
 #include <VL53L1X.h>

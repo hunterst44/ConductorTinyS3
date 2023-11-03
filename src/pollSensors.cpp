@@ -29,6 +29,7 @@ vectortoBytes(accVector vector, uint8_t sensorIndex) -- makes byte array for TX
 *************************/
 void initACC() {
   uint8_t ACCStatusReg;
+  uint8_t error;
   //Initilize the MC3416 sensors
   for (int i=0; i < NUMSENSORS; i++) {
     uint8_t portNoShift = 0;
@@ -54,7 +55,7 @@ void initACC() {
     Wire.write(0x07);                  //mode register 0x07
     Wire.write(0x01);                  //Send 0x01 for watch dog and interrupt disabled, mode = WAKE
 
-    uint8_t error = Wire.endTransmission();  //Send a stop
+    error = Wire.endTransmission();  //Send a stop
       if (error == 0) {
 
         //Serial.print("I2C device found at address 0x15 using port ");
@@ -76,9 +77,9 @@ void initACC() {
     //Check the status register
     ACCStatusReg = readAccReg(portNoShift, 0x05);
     if (ACCStatusReg == 0x01) {
-      Serial.print('Sensor ');
+      Serial.print("Sensor ");
       Serial.print(i,DEC);
-      Serial.print(' Status OK');
+      Serial.print(" Status OK");
     }
 
     //set sample rate
@@ -86,7 +87,7 @@ void initACC() {
     Wire.write(0x08);                  //sample rate register 0x08
     Wire.write(0x05);                  //Send 0x05 for max speed (1024 samples / second)
 
-    uint8_t error = Wire.endTransmission();  //Send a stop
+    error = Wire.endTransmission();  //Send a stop
       if (error == 0) {
 
         //Serial.print("I2C device found at address 0x15 using port ");
@@ -108,9 +109,9 @@ void initACC() {
       //Check the status register
       ACCStatusReg = readAccReg(portNoShift, 0x05);
       if (ACCStatusReg == 0x05) {
-        Serial.print('Sensor ');
+        Serial.print("Sensor ");
         Serial.print(i,DEC);
-        Serial.print(' sample rate set to 1024 samples/second');
+        Serial.print(" sample rate set to 1024 samples/second");
       }
 
   }
