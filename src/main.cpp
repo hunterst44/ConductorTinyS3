@@ -37,7 +37,7 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 // #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <ESP32Ping.h>
-#include <VL53L1X.h>
+#include "Adafruit_VL53L1X.h"
 
 
 uint8_t testCount = 0;
@@ -45,7 +45,7 @@ uint8_t testCount = 0;
 // // Create AsyncWebServer object on port 80
 AsyncWebServer OTAserver(8080);
 
-VL53L1X timeOF;
+Adafruit_VL53L1X toF = Adafruit_VL53L1X(-1, TOFINTPIN);
 
 // //Create time of flight sensor object
 //Adafruit_VL53L0X toF = Adafruit_VL53L0X();
@@ -113,24 +113,48 @@ void setup() {
   
   Wire.begin(I2C_SDA, I2C_SCL);
   Wire.setClock(400000); // use 400 kHz I2C
-
-   timeOF.setTimeout(500);
-  if (!timeOF.init())
-  {
-    Serial.println("Failed to detect and initialize VL53L1X!");
-    while (1);
+  changeI2CPort(6);   //Set to I2C port 6 to talk to the toF through the MUX
+  if (! toF.begin(0x29, &Wire)) {
+    Serial.print(F("Error on init of VL sensor: "));
+    Serial.println(toF.vl_status);
+    while (1)       delay(10);
   }
 
+  Serial.print(F("Sensor ID: 0x"));
+  Serial.println(toF.sensorID(), HEX);
+
+  // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
+  toF.setTimingBudget(20);
+  Serial.print(F("Timing budget (ms): "));
+  Serial.println(toF.getTimingBudget());
+
+  toF.VL53L1X_SetDistanceMode(1);    //Short mode (0-1.3m)
+  
+  if (! toF.startRanging()) {
+    Serial.print(F("Couldn't start ranging: "));
+    Serial.println(toF.vl_status);
+    while (1)       delay(10);
+  }
  
+  //changeI2CPort(6);
+  // Serial.print("toF Address: ");
+  // Serial.println(timeOF.getAddress(), HEX);
+
+  // timeOF.setTimeout(500);
+  // if (!timeOF.init())
+  // {
+  //   Serial.println("Failed to detect and initialize VL53L1X!");
+  //   while(1);
+  // }
 
   // Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
   // You can change these settings to adjust the performance of the sensor, but
   // the minimum timing budget is 20 ms for short distance mode and 33 ms for
   // medium and long distance modes. See the VL53L1X datasheet for more
   // information on range and timing limits.
-  timeOF.setDistanceMode(VL53L1X::Medium);
-  timeOF.setMeasurementTimingBudget(33000);
-  timeOF.startContinuous(33);
+  // timeOF.setDistanceMode(VL53L1X::Medium);
+  // timeOF.setMeasurementTimingBudget(33000);
+  // timeOF.startContinuous(33);
 
 //OLD ToF Functions - for VL53L0X
   // while (!toF.begin(0x29,false)) {
@@ -147,11 +171,12 @@ void setup() {
 
   initACC(); //Set up accelerometers
 
-  tftSetup();
+  //tftSetup();
 
   //Wifi stuff
   WiFi.mode(WIFI_MODE_APSTA);
   WiFi.setAutoReconnect(true);
+ 
   //Check cnt.txt to see if there is a saved network connection
   
   CntInfo cntInfo = getNetworkSpiffs();
@@ -188,6 +213,9 @@ void setup() {
     // cntInfo.ssid = APNETWORK;
     connectWiFi(0, APNETWORK, APPASS);
   }
+   Serial.print("WiFi.SSID()");
+   Serial.println(WiFi.SSID());
+   Serial.println(APNETWORK);
 
 // CntInfo cntInfo;
 // cntInfo.cntMode = 1;
@@ -237,6 +265,7 @@ void setup() {
 //   //   Serial.print("Core: ");
 //   //   Serial.println(xPortGetCoreID());
 //   // #endif /*DEBUG*/
+client = wifiServer.available();
 }
 
 // /************************
@@ -251,7 +280,7 @@ void loop() {
       AccPacketStartMicro = timerReadMicros(timer1);
   }
 
-  client = wifiServer.available();
+  //client = wifiServer.available();
  
   if (client) {
     while (client.connected()) {
@@ -265,6 +294,7 @@ void loop() {
         
         uint8_t rxStr[rxIdx];
         if (rxIdx == 1) {
+          Serial.println("rxIdx == 1 Should come here everytime...");
           byteCode = client.read();
           Serial.println("rxIdx == 1 Should come here everytime...");
         } else {
@@ -310,6 +340,7 @@ void loop() {
             //Set up index and array to receive data                
           uint8_t dist = -1;         //Distance measurement in mm
           //Send Acc data only
+          Serial.println("Start Acc data packet");
           #ifdef DEBUG
             Serial.println("Start Acc data packet");
           #endif /*DEBUG*/
@@ -347,7 +378,7 @@ void loop() {
                   portNoShift = 7;
               }
               //For breadboard prototype - hit the sensor at port 7 NUMSENSORS times
-              //portNoShift = 7;
+              portNoShift = 7;
               accVecArray[i][sampleCount] = getAccAxes(portNoShift); //Use when their is only one sensor. Reads the same sensor over and over
               //USE this line with more than one sensor //accVecArray[i][sampleCount] = getAccAxes(i+1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
               // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
@@ -407,19 +438,29 @@ void loop() {
           //Structure to hold ToF sensor data
           //VL53L0X_RangingMeasurementData_t measure;
           if (toFReady) {
+              changeI2CPort(6);
+              if (toF.dataReady()) {
+                // new measurement for the taking!
+                dist16 = toF.distance();
+                if (dist16 == -1) {
+                  // something went wrong!
+                  Serial.print(F("Couldn't get distance: "));
+                  Serial.println(toF.vl_status);
+                }
+
             //timeOF.startContinuous(33);
             //toF.startMeasurement(33);
-            Serial.print("range: ");
-            Serial.print(timeOF.ranging_data.range_mm);
-            Serial.print("\tstatus: ");
-            Serial.print(VL53L1X::rangeStatusToString(timeOF.ranging_data.range_status));
-            Serial.print("\tpeak signal: ");
-            Serial.print(timeOF.ranging_data.peak_signal_count_rate_MCPS);
-            Serial.print("\tambient: ");
-            Serial.print(timeOF.ranging_data.ambient_count_rate_MCPS);
+            // Serial.print("range: ");
+            // Serial.print(timeOF.ranging_data.range_mm);
+            // Serial.print("\tstatus: ");
+            // Serial.print(VL53L1X::rangeStatusToString(timeOF.ranging_data.range_status));
+            // Serial.print("\tpeak signal: ");
+            // Serial.print(timeOF.ranging_data.peak_signal_count_rate_MCPS);
+            // Serial.print("\tambient: ");
+            // Serial.print(timeOF.ranging_data.ambient_count_rate_MCPS);
 
-            if (timeOF.ranging_data.range_mm > 0 && timeOF.ranging_data.range_mm < 2000) {
-               dist16 = timeOF.ranging_data.range_mm;
+            // if (timeOF.ranging_data.range_mm > 0 && timeOF.ranging_data.range_mm < 2000) {
+            //    dist16 = timeOF.ranging_data.range_mm;
             }
               else {
                 dist16 = -1;

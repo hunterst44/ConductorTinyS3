@@ -28,6 +28,7 @@ vectortoBytes(accVector vector, uint8_t sensorIndex) -- makes byte array for TX
  * initACC()
 *************************/
 void initACC() {
+  Serial.println("initACC()");
   uint8_t ACCStatusReg;
   uint8_t error;
   //Initilize the MC3416 sensors
@@ -65,7 +66,9 @@ void initACC() {
         #endif /*DEBUG*/
 
       } else {
-          Serial.print("I2C Error writing to register 7 (mode register): ");
+          Serial.print("I2C Error writing to register (register): ");
+          Serial.println(portNoShift, DEC);
+          Serial.print("I2C Error: ");
           Serial.println(error,HEX);
           #ifdef DEBUG
             
@@ -256,8 +259,8 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
   Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
   Wire.write(r);                  //Send the register we want to read to the sensor
   
-  // Serial.print("r transmitted: ");
-  // Serial.println(r, HEX);
+  Serial.print("r transmitted: ");
+  Serial.println(r, HEX);
 
   #ifdef DEBUG
     Serial.print("r transmitted: ");
@@ -288,8 +291,8 @@ int16_t readAccReg(uint8_t Port, uint8_t r) {
     while(Wire.available()) {
       regOut = Wire.read();
 
-      // Serial.print("Register Output: ");
-      // Serial.println(regOut, HEX);
+      Serial.print("Register Output: ");
+      Serial.println(regOut, HEX);
 
       #ifdef DEBUG
         Serial.print("Register Output: ");
@@ -343,15 +346,19 @@ int16_t getAxisAcc(int16_t axisHi, int16_t axisLo) {
 
     int16_t axisAcc = (axisHi << 8) + axisLo;  //Shift the MSB and then add the LSB
 
+    Serial.print("axisAccHi Shift: ");
+    Serial.println(axisAcc, HEX);
+
     #ifdef DEBUG
       Serial.print("axisAccHi Shift: ");
       Serial.println(axisAcc, HEX);
     #endif /*DEBUG*/
     
-    //axisAcc = axisAcc + (axisLo >> 4);
+    Serial.print("axisAccLo: ");
+    Serial.println(axisLo, HEX);
+
+    axisAcc = axisAcc + axisLo;
     
-    // Serial.print("axisAccLo: ");
-    //   Serial.println((axisLo >> 4), HEX);
     //   Serial.print("axisAcc: ");
     //   Serial.println(axisAcc, HEX);
     //   Serial.println();
@@ -363,16 +370,16 @@ int16_t getAxisAcc(int16_t axisHi, int16_t axisLo) {
       Serial.println();
     #endif /*DEBUG*/
 
-    // Serial.print("axisAcc: ");
-    // Serial.println(axisAcc, DEC);
+    Serial.print("axisAcc (16bit): ");
+    Serial.println(axisAcc, HEX);
     
-    //int8_t axisAccScaled = axisAcc / 16;   //Divide 16 to reduce 12 bit signed 12 bit int (+-2047) to a signed 8bit int (+-127)
+    int8_t axisAccScaled = axisAcc / 16;   //Divide 16 to reduce 12 bit signed 12 bit int (+-2047) to a signed 8bit int (+-127)
 
-    Serial.print("axisAcc: ");
-    Serial.println(axisAcc, DEC);
+    Serial.print("axisAccScaled (8bit): ");
+    Serial.println(axisAccScaled, HEX);
     Serial.println();
 
-    return axisAcc;                  //Return single byte value
+    return axisAccScaled;                  //Return single byte value
   }
 
 
@@ -601,13 +608,13 @@ accVector movingAvg(uint8_t sensorIndex) {
   movingAvgVect.ZAcc = (int8_t)round(Zholder);
 
 
-  // Serial.println(sensorIndex, DEC);
-  // Serial.print("movingAvgVect.XAcc: ");
-  // Serial.println(movingAvgVect.XAcc, DEC);
-  // Serial.print("movingAvgVect.YAcc: ");
-  // Serial.println(movingAvgVect.YAcc, DEC);
-  // Serial.print("movingAvgVect.ZAcc: ");
-  // Serial.println(movingAvgVect.ZAcc, DEC);
+  Serial.println(sensorIndex, DEC);
+  Serial.print("movingAvgVect.XAcc: ");
+  Serial.println(movingAvgVect.XAcc, DEC);
+  Serial.print("movingAvgVect.YAcc: ");
+  Serial.println(movingAvgVect.YAcc, DEC);
+  Serial.print("movingAvgVect.ZAcc: ");
+  Serial.println(movingAvgVect.ZAcc, DEC);
   
   #ifdef DEBUG
     Serial.println(sensorIndex, DEC);
