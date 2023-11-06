@@ -33,11 +33,11 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 #include <math.h>
 // #include <AsyncElegantOTA.h>
 // #include <ESPAsyncWebServer.h>
-#include "Adafruit_VL53L0X.h"
+//#include "Adafruit_VL53L0X.h"
 // #include <TFT_eSPI.h>
 #include <SPI.h>
 #include <ESP32Ping.h>
-//#include "Adafruit_VL53L1X.h"
+#include "Adafruit_VL53L1X.h"
 
 
 uint8_t testCount = 0;
@@ -45,13 +45,14 @@ uint8_t testCount = 0;
 // // Create AsyncWebServer object on port 80
 //AsyncWebServer OTAserver(8080);
 
-//Adafruit_VL53L1X toF = Adafruit_VL53L1X(-1, TOFINTPIN);
+Adafruit_VL53L1X toF = Adafruit_VL53L1X(-1, TOFINTPIN);
+
 
 // //Create time of flight sensor object
-Adafruit_VL53L0X toF = Adafruit_VL53L0X();
+// Adafruit_VL53L0X toF = Adafruit_VL53L0X();
 
-// // //Structure to hold ToF sensor data
-VL53L0X_RangingMeasurementData_t measure;
+// // // //Structure to hold ToF sensor data
+// VL53L0X_RangingMeasurementData_t measure;
 
 // //Init Display
 TFT_eSPI tft = TFT_eSPI();
@@ -111,30 +112,31 @@ void setup() {
     Serial.println("An Error has occurred while mounting SPIFFS");
   }
   
+  Wire.setClock(400000); // use 400 kHz I2C
   Wire.begin(I2C_SDA, I2C_SCL);
-  //Wire.setClock(400000); // use 400 kHz I2C
-  // changeI2CPort(6);   //Set to I2C port 6 to talk to the toF through the MUX
-  // if (! toF.begin(0x29, &Wire)) {
-  //   Serial.print(F("Error on init of VL sensor: "));
-  //   Serial.println(toF.vl_status);
-  //   while (1)       delay(10);
-  // }
-
-  // Serial.print(F("Sensor ID: 0x"));
-  // Serial.println(toF.sensorID(), HEX);
-
-  // // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
-  // toF.setTimingBudget(20);
-  // Serial.print(F("Timing budget (ms): "));
-  // Serial.println(toF.getTimingBudget());
-
-  // toF.VL53L1X_SetDistanceMode(1);    //Short mode (0-1.3m)
   
-  // if (! toF.startRanging()) {
-  //   Serial.print(F("Couldn't start ranging: "));
-  //   Serial.println(toF.vl_status);
-  //   while (1)       delay(10);
-  // }
+  changeI2CPort(6);   //Set to I2C port 6 to talk to the toF through the MUX
+  if (! toF.begin(0x29, &Wire)) {
+    Serial.print(F("Error on init of VL sensor: "));
+    Serial.println(toF.vl_status);
+    while (1)       delay(10);
+  }
+
+  Serial.print(F("Sensor ID: 0x"));
+  Serial.println(toF.sensorID(), HEX);
+
+  // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
+  toF.setTimingBudget(20);
+  Serial.print(F("Timing budget (ms): "));
+  Serial.println(toF.getTimingBudget());
+
+  toF.VL53L1X_SetDistanceMode(1);    //Short mode (0-1.3m)
+  
+  if (! toF.startRanging()) {
+    Serial.print(F("Couldn't start ranging: "));
+    Serial.println(toF.vl_status);
+    while (1)       delay(10);
+  }
  
   //changeI2CPort(6);
   // Serial.print("toF Address: ");
@@ -157,21 +159,20 @@ void setup() {
   // timeOF.startContinuous(33);
 
 //OLD ToF Functions - for VL53L0X
-changeI2CPort(6);
-  while (!toF.begin(0x29,false)) {
-    Serial.println("Failed to boot VL53L0X ToF sensor... restarting");
-    ESP.restart();
-  }
-  //toF.setInterruptThresholds();
+//changeI2CPort(6);
+  // while (!toF.begin(0x29,false)) {
+  //   Serial.println("Failed to boot VL53L0X ToF sensor... restarting");
+  //   ESP.restart();
+  // }
+  // //toF.setInterruptThresholds();
 
-  //Enable Continous Measurement Mode
-  Serial.println("Set Mode VL53L0X_DEVICEMODE_CONTINUOUS_RANGING... ");
-  toF.setDeviceMode(VL53L0X_DEVICEMODE_CONTINUOUS_RANGING, false);
-  toF.configSensor(toF.VL53L0X_SENSE_LONG_RANGE);  //Set to long range
-  toFReady = 1;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
+  // //Enable Continous Measurement Mode
+  // Serial.println("Set Mode VL53L0X_DEVICEMODE_CONTINUOUS_RANGING... ");
+  // toF.setDeviceMode(VL53L0X_DEVICEMODE_CONTINUOUS_RANGING, false);
+  // toF.configSensor(toF.VL53L0X_SENSE_LONG_RANGE);  //Set to long range
+  // toFReady = 1;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
 
-  testMC3416();
-  //initACC(); //Set up accelerometers
+  initACC(); //Set up accelerometers
 
   //tftSetup();
 
@@ -283,7 +284,8 @@ void loop() {
   }
 
   client = wifiServer.available();
- 
+  //accVecArray[0][sampleCount] = getAccAxes(7);
+
   if (client) {
     while (client.connected()) {
         //Serial.println("Client Connected");
@@ -300,7 +302,7 @@ void loop() {
           byteCode = client.read();
           Serial.println("rxIdx == 1 Should come here everytime...");
         } else {
-          Serial.println("rxIdx != 1 Should conly be here when we write text...");
+          Serial.println("rxIdx != 1 Should only be here when we write text...");
           //uint8_t rxStr[rxIdx];
           
           for (uint8_t k; k < rxIdx; k++) {
@@ -381,6 +383,7 @@ void loop() {
               }
               //For breadboard prototype - hit the sensor at port 7 NUMSENSORS times
               portNoShift = 7;
+              Serial.println("Call getAccAxes");
               accVecArray[i][sampleCount] = getAccAxes(portNoShift); //Use when their is only one sensor. Reads the same sensor over and over
               //USE this line with more than one sensor //accVecArray[i][sampleCount] = getAccAxes(i+1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
               // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
@@ -406,6 +409,7 @@ void loop() {
 //***************************************************************/
           uint32_t MvgAvgStart = timerReadMicros(timer1);
           if (sampleCount == MOVINGAVGSIZE) {        //After moving average size of samples (3) filter
+          Serial.println("Moving Average");
             accVector AccVectorMAVG[NUMSENSORS];
             for (uint8_t b = 0; b < NUMSENSORS; b++) {   //One vector per sensor
               //vectortoBytes(accVecArray[i][0], i);  //Puts data into byte format for socket TX
@@ -439,16 +443,25 @@ void loop() {
 
           //Structure to hold ToF sensor data
           //VL53L0X_RangingMeasurementData_t measure;
-          if (toFReady) {
-              //changeI2CPort(6);
-              //if (toF.dataReady()) {
-                // new measurement for the taking!
-                //dist16 = toF.distance();
-                if (dist16 == -1) {
-                  // something went wrong!
-                  Serial.print(F("Couldn't get distance: "));
-                  //Serial.println(toF.vl_status);
-                }
+          //if (toFReady) {
+          changeI2CPort(6);
+          //if (toF.dataReady()) {
+            // new measurement for the taking!
+          dist16 = toF.distance();
+          if (dist16 == -1) {
+            // something went wrong!
+            Serial.print(F("Couldn't get distance: "));
+            //Serial.println(toF.vl_status);
+          }
+          if (dist16 > 1500) {
+            dist = 127;
+
+          } else if (dist16 > 0) {
+              dist = (uint8_t) ((dist16) / 12);   //Divide by 12 to get range of 0 - 1500mm in 8 bits
+          } else {
+            dist = -1;
+          }
+                //dist = (uint8_t) ((dist16) >> 2);   //Divide by 8 to get range of 0 - 2000mm in 8 bits
 
             //timeOF.startContinuous(33);
             //toF.startMeasurement(33);
@@ -468,69 +481,69 @@ void loop() {
             //     dist16 = -1;
             // }
 
-            toFReady = 0;
-            toFLoopCount = 0;
-          }
-          else {
-            dist = (uint8_t) ((dist16) >> 2);   //Divide by 8 to get range of 0 - 2000mm in 8 bits
-            toFLoopCount++;
-          }  
+          //   toFReady = 0;
+          //   toFLoopCount = 0;
+          // }
+          // else {
+          //   dist = (uint8_t) ((dist16) >> 2);   //Divide by 8 to get range of 0 - 2000mm in 8 bits
+          //   toFLoopCount++;
+          // }  
 
         //dist = (uint8_t) ((dist16) >> 2);   //Divide by 8 to get range of 0 - 2000mm in 8 bits
 
-          uint8_t distReady = digitalRead(TOFINTPIN);
-          if (distReady == LOW) {
+          //uint8_t distReady = digitalRead(TOFINTPIN);
+          //if (distReady == LOW) {
             // toF.getRangingMeasurement(&measure, false);
             // toF.getVcselPulsePeriod();
             // toF.setMeasurementTimingBudgetMicroSeconds();
             // toF.configSensor();
             // toF
-            toF.getSingleRangingMeasurement(&measure, true);
+            //toF.getSingleRangingMeasurement(&measure, true);
             //toF.setGpioConfig();
 
-            uint16_t dist16 = measure.RangeMilliMeter;
+            //uint16_t dist16 = measure.RangeMilliMeter;
 
-            if (measure.RangeStatus == 0 || measure.RangeStatus == 2) {
-              Serial.println("Range Valid");
-              Serial.println("****************************************");
-              Serial.println("raw distance: ");
-              Serial.println(dist16, DEC);
-              Serial.println(dist16, DEC);
-              Serial.println(dist16, DEC);
-              Serial.println(dist16, DEC);
-              Serial.println(dist16, DEC);
-              Serial.println("****************************************");
+          //   if (measure.RangeStatus == 0 || measure.RangeStatus == 2) {
+          //     Serial.println("Range Valid");
+          //     Serial.println("****************************************");
+          //     Serial.println("raw distance: ");
+          //     Serial.println(dist16, DEC);
+          //     Serial.println(dist16, DEC);
+          //     Serial.println(dist16, DEC);
+          //     Serial.println(dist16, DEC);
+          //     Serial.println(dist16, DEC);
+          //     Serial.println("****************************************");
               
 
-            } else {
-              dist = -1;
+          //   } else {
+          //     dist = -1;
             
-              if (measure.RangeStatus == 1) {
-                Serial.print("Sigma Fail");
-              } else if (measure.RangeStatus == 2) {
-                Serial.print("Signal Fail");
-              } else if ((measure.RangeStatus == 3)) {
-                Serial.print("Min Range Fail");
-              } else if (measure.RangeStatus == 4) {
-                Serial.print("Phase Fail");
-              } else if ((measure.RangeStatus == 255)) {
-                Serial.print("No Data Fail");
-                //ESP.restart();
-              }
-            }
-            toF.clearInterruptMask(false);    //Reset the interrupt for the next measurement
-            toFReady = 1; 
-          } else {
-            Serial.println("distReady High");
-          }
-          Serial.print("Scaled distance: ");
-          Serial.println(dist, HEX);
+          //     if (measure.RangeStatus == 1) {
+          //       Serial.print("Sigma Fail");
+          //     } else if (measure.RangeStatus == 2) {
+          //       Serial.print("Signal Fail");
+          //     } else if ((measure.RangeStatus == 3)) {
+          //       Serial.print("Min Range Fail");
+          //     } else if (measure.RangeStatus == 4) {
+          //       Serial.print("Phase Fail");
+          //     } else if ((measure.RangeStatus == 255)) {
+          //       Serial.print("No Data Fail");
+          //       //ESP.restart();
+          //     }
+          //   }
+          //   toF.clearInterruptMask(false);    //Reset the interrupt for the next measurement
+          //   toFReady = 1; 
+          // } else {
+          //   Serial.println("distReady High");
+          // }
+          // Serial.print("Scaled distance: ");
+          // Serial.println(dist, HEX);
         
-          Serial.print("distance Decimal: ");
-          Serial.println(dist, DEC);
+          // Serial.print("distance Decimal: ");
+          // Serial.println(dist, DEC);
 
-          Serial.print("samples per distance measurement: ");
-          Serial.println(toFLoopCount, DEC);
+          // Serial.print("samples per distance measurement: ");
+          // Serial.println(toFLoopCount, DEC);
           
           uint32_t getDistEnd = timerReadMicros(timer1);
           Serial.print("Dist measurement micros: ");

@@ -25,223 +25,6 @@ vectortoBytes(accVector vector, uint8_t sensorIndex) -- makes byte array for TX
 // #include "Adafruit_VL53L0X.h"
 
 
-
-void numFun() {
-  
-  uint8_t MSB = 0x80;
-  uint8_t LSB = 0x20;
-  Serial.print("0x80 (BIN): ");
-  Serial.println(MSB, HEX);
-  
-  int16_t MSBPlus = int16_t(MSB << 8);
-  Serial.print("0x80 << 8: ");
-  Serial.println(MSBPlus, HEX);
-
-  int16_t MSBTimes = MSB * 0x100;
-  Serial.print("MSB * 0x100: ");
-  Serial.println(MSBTimes, HEX);
-
-  int16_t MSBPlusLSB = MSBPlus + LSB;
-  Serial.print("0x80 << 8: ");
-  Serial.println(MSBPlusLSB, HEX);
-
-  MSBPlusLSB = MSBPlusLSB / 0x10;
-  int8_t Scaled = int8_t(MSBPlusLSB);
-  Serial.print("Scaled: ");
-  Serial.println(Scaled, HEX);
-
-}
-
-
-void testMC3416() {
-  uint8_t regData;
-  
-  changeI2CPort(7);
-  Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
-  Wire.write(0x05);                  //Send the register we want to read to the sensor and send a restart
-  
-  uint8_t error = Wire.endTransmission(0);  // Send the bytes with an restart
-      if (error == 0) {
-
-        Serial.println("I2C device found at address 0x15 using port 7");
-        //Serial.println(Port, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
-
-      } else {
-          Serial.print("I2C Error: ");
-          Serial.println(error,HEX);
-          #ifdef DEBUG
-            
-            Serial.print("I2C Error: ");
-            Serial.println(error,HEX);
-          #endif /*DEBUG*/
-          //return -1;
-      }
-  //Must write device address with the read bit set (ie. LSB is 1)
-    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
-    while(Wire.available()) {
-      regData = Wire.read();
-
-      Serial.print("Register Output: ");
-      Serial.println(regData, BIN);
-
-      #ifdef DEBUG
-        Serial.print("Register Output: ");
-        Serial.println(regOut, HEX);
-      #endif /*DEBUG*/
-    }
-
-     //Set mode
-    Serial.println("Set mode to Wake");
-    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
-    Wire.write(0x07);                  //mode register 0x07
-    Wire.write(0x01);                  //Send 0x01 for watch dog and interrupt disabled, mode = WAKE
-
-    error = Wire.endTransmission();  //Send a stop
-      if (error == 0) {
-
-        Serial.print("I2C device found at address 0x15 using port ");
-        Serial.println(7, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
-
-      } else {
-          Serial.print("I2C Error writing to register (register): ");
-          Serial.println(7, DEC);
-          Serial.print("I2C Error: ");
-          Serial.println(error,HEX);
-          #ifdef DEBUG
-            
-            Serial.print("I2C Error: ");
-            Serial.println(error,HEX);
-          #endif /*DEBUG*/
-      }
-
-      Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
-      Wire.write(0x05);                  //Send the register we want to read to the sensor and send a restart
-  
-      error = Wire.endTransmission(0);  // Send the bytes with an restart
-      if (error == 0) {
-
-        Serial.println("I2C device found at address 0x15 using port 7");
-        //Serial.println(Port, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
-
-      } else {
-          Serial.print("I2C Error: ");
-          Serial.println(error,HEX);
-          #ifdef DEBUG
-            
-            Serial.print("I2C Error: ");
-            Serial.println(error,HEX);
-          #endif /*DEBUG*/
-          //return -1;
-      }
-  //Must write device address with the read bit set (ie. LSB is 1)
-    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
-    while(Wire.available()) {
-      regData = Wire.read();
-
-      Serial.print("Register Output After: ");
-      Serial.println(regData, BIN);
-
-      #ifdef DEBUG
-        Serial.print("Register Output: ");
-        Serial.println(regOut, HEX);
-      #endif /*DEBUG*/
-    }
-
-    //Test gettting data out of the sensor
-    int8_t ACCdatas;
-    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
-      Wire.write(0x0E);                  //Send the register we want to read to the sensor and send a restart
-  
-      error = Wire.endTransmission(0);  // Send the bytes with an restart
-      if (error == 0) {
-
-        Serial.println("I2C device found at address 0x15 using port 7");
-        //Serial.println(Port, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
-
-      } else {
-          Serial.print("I2C Error: ");
-          Serial.println(error,HEX);
-          #ifdef DEBUG
-            
-            Serial.print("I2C Error: ");
-            Serial.println(error,HEX);
-          #endif /*DEBUG*/
-          //return -1;
-      }
-  //Must write device address with the read bit set (ie. LSB is 1)
-    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
-    while(Wire.available()) {
-      ACCdatas = Wire.read();
-
-      Serial.print("X Axis MSB 1: ");
-      Serial.println(ACCdatas, BIN);
-
-      #ifdef DEBUG
-        Serial.print("Register Output: ");
-        Serial.println(regOut, HEX);
-      #endif /*DEBUG*/
-    }
-    Serial.print("Counting...");
-    uint32_t countme = 0;
-    while (countme < 40000000) {
-      countme++;
-    }
-
-     //Test gettting data out of the sensor
-      Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
-      Wire.write(0x0E);                  //Send the register we want to read to the sensor and send a restart
-  
-      error = Wire.endTransmission(0);  // Send the bytes with an restart
-      if (error == 0) {
-
-        Serial.println("I2C device found at address 0x15 using port 7");
-        //Serial.println(Port, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
-
-      } else {
-          Serial.print("I2C Error: ");
-          Serial.println(error,HEX);
-          #ifdef DEBUG
-            
-            Serial.print("I2C Error: ");
-            Serial.println(error,HEX);
-          #endif /*DEBUG*/
-          //return -1;
-      }
-  //Must write device address with the read bit set (ie. LSB is 1)
-    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
-    while(Wire.available()) {
-      ACCdatas = Wire.read();
-
-      Serial.print("X Axis MSB 2: ");
-      Serial.println(ACCdatas, BIN);
-
-      #ifdef DEBUG
-        Serial.print("Register Output: ");
-        Serial.println(regOut, HEX);
-      #endif /*DEBUG*/
-    }
-
-
-}
-
-
-
-
 /************************
  * initACC()
 *************************/
@@ -273,69 +56,46 @@ void initACC() {
     //Check the status register
     Serial.println("");
     Serial.println("Check the status register");
-    ACCStatusReg = readAccReg(portNoShift, 0x05);
-      Serial.print("Sensor ");
-      Serial.print(i,DEC);
-      Serial.print(" Status Register: ");
+
+    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+    Wire.write(0x05);                  //Send the register we want to read to the sensor and send a restart
+    
+    uint8_t error = Wire.endTransmission(0);  // Send the bytes with an restart
+        if (error != 0) {
+
+            Serial.print("I2C Error Requesting Status Register: ");
+            Serial.println(error,HEX);
+            #ifdef DEBUG
+              
+              Serial.print("I2C Error: ");
+              Serial.println(error,HEX);
+            #endif /*DEBUG*/
+            //return -1;
+        }
+    //Must write device address with the read bit set (ie. LSB is 1)
+    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
+    while(Wire.available()) {
+      ACCStatusReg = Wire.read();
+
+      Serial.print("Register Output: ");
       Serial.println(ACCStatusReg, BIN);
-    if (ACCStatusReg == 0x01) {
-      Serial.println(" Status OK");
+
+      #ifdef DEBUG
+        Serial.print("Register Output: ");
+        Serial.println(regOut, HEX);
+      #endif /*DEBUG*/
     }
 
-    //set sample rate
-    Serial.println("Set sample rate");
-    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
-    Wire.write(0x08);                  //sample rate register 0x08
-    Wire.write(0x05);                  //Send 0x05 for max speed (1024 samples / second)
-
-    error = Wire.endTransmission();  //Send a stop
-      if (error == 0) {
-
-        //Serial.print("I2C device found at address 0x15 using port ");
-        //Serial.println(Port, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
-
-      } else {
-          Serial.print("I2C Error writing to register 8 (sample rate): ");
-          Serial.println(error,HEX);
-          #ifdef DEBUG
-            
-            Serial.print("I2C Error: ");
-            Serial.println(error,HEX);
-          #endif /*DEBUG*/
-      }
-
-      //Check the Motion Control register
-      Serial.println("Check the Motion Control register");
-      ACCStatusReg = readAccReg(portNoShift, 0x08);
-      Serial.print("Sensor ");
-      Serial.print(i,DEC);
-      Serial.print(" Status Register: ");
-      Serial.println(ACCStatusReg, BIN);
-      if (ACCStatusReg == 0x05) {
-        Serial.print(" sample rate set to 1024 samples/second");
-      }
-
-    //Set mode
+     //Set mode
     Serial.println("Set mode to Wake");
     Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
     Wire.write(0x07);                  //mode register 0x07
     Wire.write(0x01);                  //Send 0x01 for watch dog and interrupt disabled, mode = WAKE
 
     error = Wire.endTransmission();  //Send a stop
-      if (error == 0) {
-
-        Serial.print("I2C device found at address 0x15 using port ");
-        Serial.println(portNoShift, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
-
-      } else {
-          Serial.print("I2C Error writing to register (register): ");
-          Serial.println(portNoShift, DEC);
+      if (error != 0) {
+          Serial.print("I2C Error writing to Mode Register: ");
+          Serial.println(7, DEC);
           Serial.print("I2C Error: ");
           Serial.println(error,HEX);
           #ifdef DEBUG
@@ -345,8 +105,69 @@ void initACC() {
           #endif /*DEBUG*/
       }
 
+      //Read Device Status again
+      Serial.println("Check the status register Again");
+      Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+      Wire.write(0x05);                  //Send the register we want to read to the sensor and send a restart
+  
+      error = Wire.endTransmission(0);  // Send the bytes with an restart
+     if (error != 0) {
+
+            Serial.print("I2C Error Requesting Status Register: ");
+            Serial.println(error,HEX);
+            #ifdef DEBUG
+              
+              Serial.print("I2C Error: ");
+              Serial.println(error,HEX);
+            #endif /*DEBUG*/
+            //return -1;
+        }
+  //Must write device address with the read bit set (ie. LSB is 1)
+    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
+    while(Wire.available()) {
+      ACCStatusReg = Wire.read();
+
+      Serial.print("Register Output After: ");
+      Serial.println(ACCStatusReg, BIN);
+
+      #ifdef DEBUG
+        Serial.print("Register Output: ");
+        Serial.println(regOut, HEX);
+      #endif /*DEBUG*/
+    }
+
+    //Test gettting data out of the sensor
+    Serial.println("Read X Axis data");
+    int8_t ACCdatas;
+    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+      Wire.write(0x0E);                  //Send the register we want to read to the sensor and send a restart
+  
+      error = Wire.endTransmission(0);  // Send the bytes with an restart
+      if (error != 0) {
+          Serial.print("I2C Error reading from Register 0x0E (X MSB): ");
+          Serial.println(error,HEX);
+          #ifdef DEBUG
+            
+            Serial.print("I2C Error: ");
+            Serial.println(error,HEX);
+          #endif /*DEBUG*/
+          //return -1;
+      }
+  //Must write device address with the read bit set (ie. LSB is 1)
+    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
+    while(Wire.available()) {
+      ACCdatas = Wire.read();
+
+      Serial.print("X Axis MSB 1: ");
+      Serial.println(ACCdatas, BIN);
+
+      #ifdef DEBUG
+        Serial.print("Register Output: ");
+        Serial.println(regOut, HEX);
+      #endif /*DEBUG*/
+    }
+    }
   }
-}
 
 /************************
  * getAccAxes()
@@ -499,10 +320,7 @@ int8_t readAccReg(uint8_t Port, uint8_t r) {
     Serial.println("Send Device Address then register address (r)");
   #endif /*DEBUG*/
 
-  Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
-  Wire.write(r);                  //Send the register we want to read to the sensor
-  
-  Serial.print("r transmitted: ");
+   Serial.print("r transmitted: ");
   Serial.println(r, HEX);
 
   #ifdef DEBUG
@@ -510,27 +328,30 @@ int8_t readAccReg(uint8_t Port, uint8_t r) {
     Serial.println(r, HEX);
   #endif /*DEBUG*/
 
-  uint8_t error = Wire.endTransmission();  //Send a stop
-      if (error == 0) {
+  Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+  Wire.write(r);                  //Send the register we want to read to the sensor
+  
+  uint8_t error = Wire.endTransmission(0);  // Send the bytes with an restart
+  if (error == 0) {
 
-        //Serial.print("I2C device found at address 0x15 using port ");
-        //Serial.println(Port, DEC);
-        #ifdef DEBUG
-          Serial.print("I2C device found at address 0x15\n");
-        #endif /*DEBUG*/
+    Serial.println("I2C device found at address 0x15 using port 7");
+    //Serial.println(Port, DEC);
+    #ifdef DEBUG
+      Serial.print("I2C device found at address 0x15\n");
+    #endif /*DEBUG*/
 
-      } else {
-          Serial.print("I2C Error: ");
-          Serial.println(error,HEX);
-          #ifdef DEBUG
-            
-            Serial.print("I2C Error: ");
-            Serial.println(error,HEX);
-          #endif /*DEBUG*/
-          //return -1;
-      }
+  } else {
+      Serial.print("I2C Error: ");
+      Serial.println(error,HEX);
+      #ifdef DEBUG
+        
+        Serial.print("I2C Error: ");
+        Serial.println(error,HEX);
+      #endif /*DEBUG*/
+      //return -1;
+  }
 
-    Wire.requestFrom(MC3416I2CADDR, 1, 1);   //Send read request
+    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
     while(Wire.available()) {
       regOut = Wire.read();
 
@@ -1070,7 +891,7 @@ uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]) {
       }
    }
   Serial.println("Connected to network");
-  tftWriteNetwork(ssid, mode);
+  //tftWriteNetwork(ssid, mode);
   return 1;
 }
 
