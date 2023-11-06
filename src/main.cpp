@@ -112,29 +112,29 @@ void setup() {
   }
   
   Wire.begin(I2C_SDA, I2C_SCL);
-  Wire.setClock(400000); // use 400 kHz I2C
-  changeI2CPort(6);   //Set to I2C port 6 to talk to the toF through the MUX
-  if (! toF.begin(0x29, &Wire)) {
-    Serial.print(F("Error on init of VL sensor: "));
-    Serial.println(toF.vl_status);
-    while (1)       delay(10);
-  }
+  //Wire.setClock(400000); // use 400 kHz I2C
+  // changeI2CPort(6);   //Set to I2C port 6 to talk to the toF through the MUX
+  // if (! toF.begin(0x29, &Wire)) {
+  //   Serial.print(F("Error on init of VL sensor: "));
+  //   Serial.println(toF.vl_status);
+  //   while (1)       delay(10);
+  // }
 
-  Serial.print(F("Sensor ID: 0x"));
-  Serial.println(toF.sensorID(), HEX);
+  // Serial.print(F("Sensor ID: 0x"));
+  // Serial.println(toF.sensorID(), HEX);
 
-  // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
-  toF.setTimingBudget(20);
-  Serial.print(F("Timing budget (ms): "));
-  Serial.println(toF.getTimingBudget());
+  // // Valid timing budgets: 15, 20, 33, 50, 100, 200 and 500ms!
+  // toF.setTimingBudget(20);
+  // Serial.print(F("Timing budget (ms): "));
+  // Serial.println(toF.getTimingBudget());
 
-  toF.VL53L1X_SetDistanceMode(1);    //Short mode (0-1.3m)
+  // toF.VL53L1X_SetDistanceMode(1);    //Short mode (0-1.3m)
   
-  if (! toF.startRanging()) {
-    Serial.print(F("Couldn't start ranging: "));
-    Serial.println(toF.vl_status);
-    while (1)       delay(10);
-  }
+  // if (! toF.startRanging()) {
+  //   Serial.print(F("Couldn't start ranging: "));
+  //   Serial.println(toF.vl_status);
+  //   while (1)       delay(10);
+  // }
  
   //changeI2CPort(6);
   // Serial.print("toF Address: ");
@@ -169,7 +169,8 @@ void setup() {
   // toF.configSensor(toF.VL53L0X_SENSE_LONG_RANGE);  //Set to long range
   // toFReady = 1;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
 
-  initACC(); //Set up accelerometers
+  testMC3416();
+  //initACC(); //Set up accelerometers
 
   //tftSetup();
 
@@ -265,14 +266,14 @@ void setup() {
 //   //   Serial.print("Core: ");
 //   //   Serial.println(xPortGetCoreID());
 //   // #endif /*DEBUG*/
-client = wifiServer.available();
+//client = wifiServer.available();
 }
 
 // /************************
 //  * loop()
 // *************************/
 void loop() {
-
+  //Serial.println("Loop Start");
   //char bytes[SOCKPACKSIZE];
   //txIdx = SOCKPACKSIZE; 
 
@@ -280,7 +281,7 @@ void loop() {
       AccPacketStartMicro = timerReadMicros(timer1);
   }
 
-  //client = wifiServer.available();
+  client = wifiServer.available();
  
   if (client) {
     while (client.connected()) {
@@ -438,14 +439,14 @@ void loop() {
           //Structure to hold ToF sensor data
           //VL53L0X_RangingMeasurementData_t measure;
           if (toFReady) {
-              changeI2CPort(6);
-              if (toF.dataReady()) {
+              //changeI2CPort(6);
+              //if (toF.dataReady()) {
                 // new measurement for the taking!
-                dist16 = toF.distance();
+                //dist16 = toF.distance();
                 if (dist16 == -1) {
                   // something went wrong!
                   Serial.print(F("Couldn't get distance: "));
-                  Serial.println(toF.vl_status);
+                  //Serial.println(toF.vl_status);
                 }
 
             //timeOF.startContinuous(33);
@@ -461,10 +462,10 @@ void loop() {
 
             // if (timeOF.ranging_data.range_mm > 0 && timeOF.ranging_data.range_mm < 2000) {
             //    dist16 = timeOF.ranging_data.range_mm;
-            }
-              else {
-                dist16 = -1;
-            }
+            // }
+            //   else {
+            //     dist16 = -1;
+            // }
 
             toFReady = 0;
             toFLoopCount = 0;

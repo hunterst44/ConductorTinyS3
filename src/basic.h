@@ -1,9 +1,10 @@
-#include "Adafruit_VL53L0X.h"
+//#include "Adafruit_VL53L0X.h"
 #include <TFT_eSPI.h>
 #include <AsyncElegantOTA.h>
 #include <ESPAsyncWebServer.h>
 #include "secrets.h"
 #include <SPIFFS.h>
+#include "Adafruit_VL53L1X.h"
 
 // ----------------------------------------------------------------------------
 // Definition of macros
@@ -33,7 +34,7 @@
 #define ACCPACKSIZE 3     //Size in bytes to send a sample from 1 accelerometer
 #define SOCKPACKSIZE  ACCPACKSIZE * NUMSENSORS //Total size of packet set to socket client (ACCPACKSIZE * number of sensors) 
 #define MOVINGAVGSIZE 5   //Number samples to include in moving average [12.5ms * 8 = 100ms]
-#define ZEROTHRES 18.0     //All sensor values between +- of this value are set to zero
+#define ZEROTHRES 10.0     //All sensor values between +- of this value are set to zero
 #define RXMODE "byteRx"
 #define TOFINTPIN 6 //Interupt pin for VL53L0X ToF sensor
 
@@ -70,8 +71,8 @@ extern uint8_t toFReady;
 extern char APssid[];
 extern char APpassword[];
 //extern AsyncWebServer OTAserver(8080);
-extern Adafruit_VL53L0X toF;
-extern VL53L0X_RangingMeasurementData_t measure;
+extern Adafruit_VL53L1X toF;  
+//extern VL53L0X_RangingMeasurementData_t measure;
 extern TFT_eSPI tft;
 extern uint8_t byteCode;
 
@@ -79,12 +80,12 @@ extern uint8_t byteCode;
 //          Global Functions
 //*************************************
 extern accVector getAccAxes(uint8_t Port);
-extern int16_t readAccReg(uint8_t Port, uint8_t r);
+extern int8_t readAccReg(uint8_t Port, uint8_t r);
 extern void changeI2CPort(uint8_t I2CPort);
-extern int16_t getAxisAcc(int16_t axisHi, int16_t axisLo);
+extern int8_t getAxisAcc(int8_t  axisHi, int8_t axisLo);
 extern void vectortoBytes(accVector vector, uint8_t sensorIndex);
 extern accVector movingAvg(uint8_t vecIndex);
-extern uint8_t getDist(Adafruit_VL53L0X toF);
+//extern uint8_t getDist(Adafruit_VL53L0X toF);
 extern uint8_t newNetConnect(uint8_t rxStr[50]);
 extern uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]);
 extern void tftWriteNetwork(char ssid[], uint8_t mode);
@@ -92,6 +93,8 @@ extern void tftSetup();
 extern uint8_t writeNetworkSpiffs(CntInfo cntInfo);
 extern CntInfo getNetworkSpiffs();
 extern void initACC();
+extern void numFun();
+extern void testMC3416();
 
 
 //**********************************
