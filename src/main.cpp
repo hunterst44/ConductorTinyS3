@@ -114,7 +114,6 @@ void setup() {
   
   Wire.setClock(400000); // use 400 kHz I2C
   Wire.begin(I2C_SDA, I2C_SCL);
-  
   changeI2CPort(6);   //Set to I2C port 6 to talk to the toF through the MUX
   if (! toF.begin(0x29, &Wire)) {
     Serial.print(F("Error on init of VL sensor: "));
@@ -179,7 +178,6 @@ void setup() {
   //Wifi stuff
   WiFi.mode(WIFI_MODE_APSTA);
   WiFi.setAutoReconnect(true);
- 
   //Check cnt.txt to see if there is a saved network connection
   
   CntInfo cntInfo = getNetworkSpiffs();
@@ -216,9 +214,6 @@ void setup() {
     // cntInfo.ssid = APNETWORK;
     connectWiFi(0, APNETWORK, APPASS);
   }
-   Serial.print("WiFi.SSID()");
-   Serial.println(WiFi.SSID());
-   Serial.println(APNETWORK);
 
 // CntInfo cntInfo;
 // cntInfo.cntMode = 1;
@@ -284,8 +279,7 @@ void loop() {
   }
 
   client = wifiServer.available();
-  //accVecArray[0][sampleCount] = getAccAxes(7);
-
+ 
   if (client) {
     while (client.connected()) {
         //Serial.println("Client Connected");
@@ -298,7 +292,6 @@ void loop() {
         
         uint8_t rxStr[rxIdx];
         if (rxIdx == 1) {
-          Serial.println("rxIdx == 1 Should come here everytime...");
           byteCode = client.read();
           Serial.println("rxIdx == 1 Should come here everytime...");
         } else {
@@ -344,7 +337,6 @@ void loop() {
             //Set up index and array to receive data                
           uint8_t dist = -1;         //Distance measurement in mm
           //Send Acc data only
-          Serial.println("Start Acc data packet");
           #ifdef DEBUG
             Serial.println("Start Acc data packet");
           #endif /*DEBUG*/

@@ -284,7 +284,6 @@
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
-    "random": "cpp",
-    "iterator": "cpp"
+    "random": "cpp"
   }
 }
