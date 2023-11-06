@@ -29,6 +29,7 @@ vectortoBytes(accVector vector, uint8_t sensorIndex) -- makes byte array for TX
  * initACC()
 *************************/
 void initACC() {
+  Serial.println("initACC()");
   uint8_t ACCStatusReg;
   uint8_t error;
   //Initilize the MC3416 sensors
@@ -437,13 +438,11 @@ int8_t getAxisAcc(int8_t axisHi, int8_t axisLo) {
     // Serial.println(axisAcc, HEX);
     
     //int8_t axisAccScaled = axisAcc / 16;   //Divide 16 to reduce 12 bit signed 12 bit int (+-2047) to a signed 8bit int (+-127)
-    //int8_t axisAccScaled = axisAcc / 16;   //Divide 16 to reduce 12 bit signed 12 bit int (+-2047) to a signed 8bit int (+-127)
 
     Serial.print("axisAcc (8bit): ");
     Serial.println(axisAcc, DEC);
     Serial.println();
 
-    return axisAcc;                  //Return single byte value
     return axisAcc;                  //Return single byte value
   }
 
@@ -686,13 +685,13 @@ accVector movingAvg(uint8_t sensorIndex) {
   movingAvgVect.ZAcc = (int8_t)round(Zholder);
 
 
-  // Serial.println(sensorIndex, DEC);
-  // Serial.print("movingAvgVect.XAcc: ");
-  // Serial.println(movingAvgVect.XAcc, DEC);
-  // Serial.print("movingAvgVect.YAcc: ");
-  // Serial.println(movingAvgVect.YAcc, DEC);
-  // Serial.print("movingAvgVect.ZAcc: ");
-  // Serial.println(movingAvgVect.ZAcc, DEC);
+  Serial.println(sensorIndex, DEC);
+  Serial.print("movingAvgVect.XAcc: ");
+  Serial.println(movingAvgVect.XAcc, DEC);
+  Serial.print("movingAvgVect.YAcc: ");
+  Serial.println(movingAvgVect.YAcc, DEC);
+  Serial.print("movingAvgVect.ZAcc: ");
+  Serial.println(movingAvgVect.ZAcc, DEC);
   
   #ifdef DEBUG
     Serial.println(sensorIndex, DEC);
