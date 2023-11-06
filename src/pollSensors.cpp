@@ -97,7 +97,7 @@ void testMC3416() {
     Serial.println("Set mode to Wake");
     Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
     Wire.write(0x07);                  //mode register 0x07
-    Wire.write(0x00);                  //Send 0x01 for watch dog and interrupt disabled, mode = WAKE
+    Wire.write(0x01);                  //Send 0x01 for watch dog and interrupt disabled, mode = WAKE
 
     error = Wire.endTransmission();  //Send a stop
       if (error == 0) {
@@ -155,6 +155,88 @@ void testMC3416() {
         Serial.println(regOut, HEX);
       #endif /*DEBUG*/
     }
+
+    //Test gettting data out of the sensor
+    int8_t ACCdatas;
+    Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+      Wire.write(0x0E);                  //Send the register we want to read to the sensor and send a restart
+  
+      error = Wire.endTransmission(0);  // Send the bytes with an restart
+      if (error == 0) {
+
+        Serial.println("I2C device found at address 0x15 using port 7");
+        //Serial.println(Port, DEC);
+        #ifdef DEBUG
+          Serial.print("I2C device found at address 0x15\n");
+        #endif /*DEBUG*/
+
+      } else {
+          Serial.print("I2C Error: ");
+          Serial.println(error,HEX);
+          #ifdef DEBUG
+            
+            Serial.print("I2C Error: ");
+            Serial.println(error,HEX);
+          #endif /*DEBUG*/
+          //return -1;
+      }
+  //Must write device address with the read bit set (ie. LSB is 1)
+    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
+    while(Wire.available()) {
+      ACCdatas = Wire.read();
+
+      Serial.print("X Axis MSB 1: ");
+      Serial.println(ACCdatas, BIN);
+
+      #ifdef DEBUG
+        Serial.print("Register Output: ");
+        Serial.println(regOut, HEX);
+      #endif /*DEBUG*/
+    }
+    Serial.print("Counting...");
+    uint32_t countme = 0;
+    while (countme < 40000000) {
+      countme++;
+    }
+
+     //Test gettting data out of the sensor
+      Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+      Wire.write(0x0E);                  //Send the register we want to read to the sensor and send a restart
+  
+      error = Wire.endTransmission(0);  // Send the bytes with an restart
+      if (error == 0) {
+
+        Serial.println("I2C device found at address 0x15 using port 7");
+        //Serial.println(Port, DEC);
+        #ifdef DEBUG
+          Serial.print("I2C device found at address 0x15\n");
+        #endif /*DEBUG*/
+
+      } else {
+          Serial.print("I2C Error: ");
+          Serial.println(error,HEX);
+          #ifdef DEBUG
+            
+            Serial.print("I2C Error: ");
+            Serial.println(error,HEX);
+          #endif /*DEBUG*/
+          //return -1;
+      }
+  //Must write device address with the read bit set (ie. LSB is 1)
+    Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
+    while(Wire.available()) {
+      ACCdatas = Wire.read();
+
+      Serial.print("X Axis MSB 2: ");
+      Serial.println(ACCdatas, BIN);
+
+      #ifdef DEBUG
+        Serial.print("Register Output: ");
+        Serial.println(regOut, HEX);
+      #endif /*DEBUG*/
+    }
+
+
 }
 
 
@@ -1096,6 +1178,41 @@ uint8_t writeNetworkSpiffs(CntInfo cntInfo) {
     }
 }
 /*
+MC3416 Acclerometer I2C requirements
+To write to a register <ESP32>, {MC3416} 
+<Start> - <7 bit device address> - <W> - {ACK} - <7 bit Register Address> - {ACK} - <Data to Write> - {ACK} - <STOP>
+
+Write procedure is: 
+Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
+Wire.write(Write Register);                  //mode register 0x07
+Wire.write(Write Data);                  //Send 0x01 for watch dog and interrupt disabled, mode = WAKE
+Wire.endTransmission();
+
+
+To Read from a register
+<Start> - <7 bit device address> - <W> - {ACK} - <7 bit Register Address> - {ACK} - <Restart> <7 bit Device Address> <Read> - {ACK} - {Data to Read} <NACK> - <STOP>
+
+Arduino wire library sends restart after a write if Wire.endTransmission(0)
+So read procdedure is:
+Wire.beginTransmission(MC3416I2CADDR);
+Wire.write(Register);
+Wire.endTransmission(0);
+Wire.requestFrom(MC3416I2CADDR, 1, 1) //Sends address, waits from 1 byte and sends stop
+while(Wire.available()) {
+  uint8_t readData = Wire.read()
+}
+
+Data Registers:
+X MSB: 0x0E
+X LSB: 0x0D
+Y MSB: 0x10
+Y LSB: 0x0F
+Z MSB: 0x12
+Z LSB: 0x11
+
+
+
+
 MXC4005XC-B Accelerometer I2C requirements:
 The first byte transmitted by the master following a START is used to address the slave device. The first 7 bits
 contain the address of the slave device, and the 8th bit is the R/W* bit (read = 1, write = 0; the asterisk indicates

@@ -1,10 +1,10 @@
-//#include "Adafruit_VL53L0X.h"
+#include "Adafruit_VL53L0X.h"
 #include <TFT_eSPI.h>
 #include <AsyncElegantOTA.h>
 #include <ESPAsyncWebServer.h>
 #include "secrets.h"
 #include <SPIFFS.h>
-#include "Adafruit_VL53L1X.h"
+//#include "Adafruit_VL53L1X.h"
 
 // ----------------------------------------------------------------------------
 // Definition of macros
@@ -71,8 +71,9 @@ extern uint8_t toFReady;
 extern char APssid[];
 extern char APpassword[];
 //extern AsyncWebServer OTAserver(8080);
-extern Adafruit_VL53L1X toF;  
-//extern VL53L0X_RangingMeasurementData_t measure;
+//extern Adafruit_VL53L1X toF;  
+extern Adafruit_VL53L0X toF;
+extern VL53L0X_RangingMeasurementData_t measure;
 extern TFT_eSPI tft;
 extern uint8_t byteCode;
 
