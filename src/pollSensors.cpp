@@ -998,6 +998,64 @@ uint8_t writeNetworkSpiffs(CntInfo cntInfo) {
       return -1;
     }
 }
+
+/********************************************
+ * tftWriteNetwork(char ssid[])
+*********************************************/
+void testSensors() {
+      Serial.println(" ");
+      Serial.print('testSensors()');
+      //Call this function in loop to see what data the sensors are producing
+        uint32_t rollOver = timerRead(timer1);
+        timerWrite(timer1, 0);
+        //accVecArray[0][sampleCount] = getAccAxes(7); //Use when their is only one sensor. Reads the same sensor over and over
+        for (uint8_t i = 0; i < NUMSENSORS; i++) {
+              // Serial.print("Sensor: ");
+              // Serial.println(i, DEC);
+              uint8_t portNoShift = 0;
+              switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
+                case 0:
+                  portNoShift = 7;
+                  break;
+                case 1:
+                  portNoShift = 0;
+                case 2:
+                  portNoShift = 4;
+                  break;
+                case 3:
+                  portNoShift = 5;
+                  break;
+                default:
+                  portNoShift = 7;
+              }
+              //For breadboard prototype - hit the sensor at port 7 NUMSENSORS times
+              //portNoShift = 7;
+              Serial.println("Call getAccAxes");
+              accVecArray[i][sampleCount] = getAccAxes(portNoShift); //Cycle through each of the sensors and add their data to accVecArray an array of three bytes per sensor
+             // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
+              // accVecArray[2][sampleCount] = getAccAxes(1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
+              // accVecArray[3][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
+            }
+
+        changeI2CPort(6);
+        if (toF.dataReady()) {
+          // new measurement for the taking!
+          uint16_t dist16 = toF.distance();
+        if (dist16 == -1) {
+          // something went wrong!
+          Serial.print(F("Couldn't get distance: "));
+          Serial.println(toF.vl_status);
+        } else {
+        Serial.print("Distance: ");
+        Serial.print(dist16);
+        toF.clearInterrupt();
+        }
+    //       #ifdef DEBUG
+    //         Serial.print("rollOver: ");
+    //         Serial.println(rollOver);
+    //       #endif /*DEBUG*/
+      }
+    }
 /*
 MC3416 Acclerometer I2C requirements
 To write to a register <ESP32>, {MC3416} 

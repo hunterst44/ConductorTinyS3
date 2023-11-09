@@ -94,6 +94,7 @@ extern void tftSetup();
 extern uint8_t writeNetworkSpiffs(CntInfo cntInfo);
 extern CntInfo getNetworkSpiffs();
 extern void initACC();
+extern void testSensors();
 // extern void numFun();
 // extern void testMC3416();
 
