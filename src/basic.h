@@ -76,13 +76,14 @@ extern Adafruit_VL53L1X toF;
 //extern VL53L0X_RangingMeasurementData_t measure;
 extern TFT_eSPI tft;
 extern uint8_t byteCode;
+extern uint8_t portChanged; //Used to say port has been changed successfully
 
 ///************************************
 //          Global Functions
 //*************************************
 extern accVector getAccAxes(uint8_t Port);
 extern int8_t readAccReg(uint8_t Port, uint8_t r);
-extern void changeI2CPort(uint8_t I2CPort);
+extern uint8_t changeI2CPort(uint8_t I2CPort);
 extern int8_t getAxisAcc(int8_t  axisHi, int8_t axisLo);
 extern void vectortoBytes(accVector vector, uint8_t sensorIndex);
 extern accVector movingAvg(uint8_t vecIndex);

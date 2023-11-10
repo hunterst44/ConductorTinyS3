@@ -33,7 +33,7 @@ void initACC() {
   uint8_t ACCStatusReg;
   uint8_t error;
   //Initilize the MC3416 sensors
-  for (int i=0; i < 1; i++) { //NUMSENSORS
+  for (int i=0; i < NUMSENSORS; i++) { //NUMSENSORS
     uint8_t portNoShift = 0;
     switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
       case 0:
@@ -41,6 +41,7 @@ void initACC() {
         break;
       case 1:
         portNoShift = 0;
+        break;
       case 2:
         portNoShift = 4;
         break;
@@ -49,13 +50,16 @@ void initACC() {
         break;
       default:
         portNoShift = 7;
+        break;
     }
-
-    changeI2CPort(portNoShift);
+    Serial.println();
+    Serial.print("Sensor ");
+    Serial.println(i, DEC);
+    portChanged = changeI2CPort(portNoShift);
+    
    
     //Check the status register
-    Serial.println("");
-    Serial.println("Check the status register");
+    Serial.println("Checking the status register");
 
     Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
     Wire.write(0x05);                  //Send the register we want to read to the sensor and send a restart
@@ -94,8 +98,7 @@ void initACC() {
 
     error = Wire.endTransmission();  //Send a stop
       if (error != 0) {
-          Serial.print("I2C Error writing to Mode Register: ");
-          Serial.println(7, DEC);
+          Serial.println("I2C Error writing to Mode Register on I2c port");
           Serial.print("I2C Error: ");
           Serial.println(error,HEX);
           #ifdef DEBUG
@@ -106,7 +109,7 @@ void initACC() {
       }
 
       //Read Device Status again
-      Serial.println("Check the status register Again");
+      Serial.println("Checking the status register again");
       Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
       Wire.write(0x05);                  //Send the register we want to read to the sensor and send a restart
   
@@ -159,7 +162,7 @@ void initACC() {
       ACCdatas = Wire.read();
 
       Serial.print("X Axis MSB 1: ");
-      Serial.println(ACCdatas, BIN);
+      Serial.println(ACCdatas, DEC);
 
       #ifdef DEBUG
         Serial.print("Register Output: ");
@@ -175,7 +178,6 @@ void initACC() {
 
 accVector getAccAxes(uint8_t Port) {
  //Read Axes of Acc1
-    Serial.println();
     Serial.print("accVector getAccAxes(), Port: ");
     Serial.println(Port, DEC);
 
@@ -202,8 +204,8 @@ accVector getAccAxes(uint8_t Port) {
 
     //XLo  
     int16_t XLo = -1; //readAccReg(Port, 0x0D);  //Just use the MSB for 1 byte
-    Serial.print("XLo: ");
-    Serial.println(XLo, DEC);
+    // Serial.print("XLo: ");
+    // Serial.println(XLo, DEC);
 
     #ifdef DEBUG
       Serial.print("XLo: ");
@@ -234,8 +236,8 @@ accVector getAccAxes(uint8_t Port) {
     //YLo  
     int16_t YLo = -1; //readAccReg(Port, 0x0F);
 
-    Serial.print("YLo: ");
-    Serial.println(YLo, DEC);
+    // Serial.print("YLo: ");
+    // Serial.println(YLo, DEC);
 
     #ifdef DEBUG
       Serial.print("YLo: ");
@@ -265,8 +267,8 @@ accVector getAccAxes(uint8_t Port) {
     //ZLo  
     int16_t ZLo = -1; //readAccReg(Port, 0x11);
 
-    Serial.print("ZLo: ");
-    Serial.println(ZLo, DEC);
+    // Serial.print("ZLo: ");
+    // Serial.println(ZLo, DEC);
 
     #ifdef DEBUG
       Serial.print("ZLo: ");
@@ -309,8 +311,11 @@ int8_t readAccReg(uint8_t Port, uint8_t r) {
   // Serial.println(Port, DEC);
   if (Port != I2CPort) {
     I2CPort = Port;
-    changeI2CPort(Port);
+    portChanged = changeI2CPort(Port);
   }
+
+  Serial.print("Writing to ACC Register: ");
+  Serial.println(r, DEC);
   
   // Serial.println("Multiplexor Port selected");
   // Serial.println("Send Device Address then register address (r)");
@@ -320,8 +325,8 @@ int8_t readAccReg(uint8_t Port, uint8_t r) {
     Serial.println("Send Device Address then register address (r)");
   #endif /*DEBUG*/
 
-   Serial.print("r transmitted: ");
-  Serial.println(r, HEX);
+  //  Serial.print("r transmitted: ");
+  // Serial.println(r, HEX);
 
   #ifdef DEBUG
     Serial.print("r transmitted: ");
@@ -332,24 +337,17 @@ int8_t readAccReg(uint8_t Port, uint8_t r) {
   Wire.write(r);                  //Send the register we want to read to the sensor
   
   uint8_t error = Wire.endTransmission(0);  // Send the bytes with an restart
-  if (error == 0) {
+  if (error != 0) {
 
-    Serial.println("I2C device found at address 0x15 using port 7");
+    Serial.print("I2C Error");
+    Serial.print(r, DEC);
+    Serial.println(" to device");
     //Serial.println(Port, DEC);
     #ifdef DEBUG
       Serial.print("I2C device found at address 0x15\n");
     #endif /*DEBUG*/
 
-  } else {
-      Serial.print("I2C Error: ");
-      Serial.println(error,HEX);
-      #ifdef DEBUG
-        
-        Serial.print("I2C Error: ");
-        Serial.println(error,HEX);
-      #endif /*DEBUG*/
-      //return -1;
-  }
+  } 
 
     Wire.requestFrom(MC3416I2CADDR, 1, 0);   //Send read request
     while(Wire.available()) {
@@ -375,7 +373,8 @@ int8_t readAccReg(uint8_t Port, uint8_t r) {
  * changeI2CPort(uint8_t I2CPort)
 ****************************************/
 
-void changeI2CPort(uint8_t I2CPort) {   //Change the port of the I2C multiplexor
+uint8_t changeI2CPort(uint8_t I2CPort) {   //Change the port of the I2C multiplexor
+  //Serial.println();
   Serial.println("changeI2CPort()");
   Serial.print("I2CPort: ");
   Serial.println((I2CPort), DEC);
@@ -383,7 +382,21 @@ void changeI2CPort(uint8_t I2CPort) {   //Change the port of the I2C multiplexor
   Serial.println((1 << I2CPort), DEC);
   Wire.beginTransmission(I2CADDR);
   Wire.write(1 << I2CPort);
-  Wire.endTransmission();
+  //Serial.println("Hi inside");
+  uint8_t error = Wire.endTransmission();
+  if (error != 0) {
+
+            Serial.print("I2C Error Chaging I2C Mux port: ");
+            Serial.println(error,HEX);
+            #ifdef DEBUG
+              
+              Serial.print("I2C Error: ");
+              Serial.println(error,HEX);
+            #endif /*DEBUG*/
+            return -1;
+        }
+  //Serial.println("Hi Outside");
+  return 1;
 
 }
 
@@ -408,11 +421,11 @@ int8_t getAxisAcc(int8_t axisHi, int8_t axisLo) {
     Serial.println(axisLo, HEX);
   #endif /*DEBUG*/
 
-    Serial.print("axisAccHi: ");
-    Serial.println(axisHi, DEC);
+    // Serial.print("axisAccHi: ");
+    // Serial.println(axisHi, DEC);
 
-    Serial.print("axisAccLo: ");
-    Serial.println(axisLo, DEC);
+    // Serial.print("axisAccLo: ");
+    // Serial.println(axisLo, DEC);
 
     int8_t axisAcc = axisHi; // + axisLo;  //Just use the MSB
 
@@ -1003,13 +1016,16 @@ uint8_t writeNetworkSpiffs(CntInfo cntInfo) {
  * tftWriteNetwork(char ssid[])
 *********************************************/
 void testSensors() {
-      Serial.println(" ");
-      Serial.print('testSensors()');
+      Serial.println();
+      Serial.println("****************");
+      Serial.println("testSensors()");
       //Call this function in loop to see what data the sensors are producing
         uint32_t rollOver = timerRead(timer1);
         timerWrite(timer1, 0);
         //accVecArray[0][sampleCount] = getAccAxes(7); //Use when their is only one sensor. Reads the same sensor over and over
         for (uint8_t i = 0; i < NUMSENSORS; i++) {
+              Serial.print("Sensor ");
+              Serial.println(i, DEC);
               // Serial.print("Sensor: ");
               // Serial.println(i, DEC);
               uint8_t portNoShift = 0;
@@ -1019,42 +1035,49 @@ void testSensors() {
                   break;
                 case 1:
                   portNoShift = 0;
+                  //portNoShift = 7;
+                  break;
                 case 2:
                   portNoShift = 4;
+                  //portNoShift = 5;
                   break;
                 case 3:
                   portNoShift = 5;
                   break;
                 default:
                   portNoShift = 7;
+                  break;
               }
               //For breadboard prototype - hit the sensor at port 7 NUMSENSORS times
               //portNoShift = 7;
               Serial.println("Call getAccAxes");
+              
               accVecArray[i][sampleCount] = getAccAxes(portNoShift); //Cycle through each of the sensors and add their data to accVecArray an array of three bytes per sensor
              // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
               // accVecArray[2][sampleCount] = getAccAxes(1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
               // accVecArray[3][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
             }
 
-        changeI2CPort(6);
-        if (toF.dataReady()) {
-          // new measurement for the taking!
-          uint16_t dist16 = toF.distance();
-        if (dist16 == -1) {
-          // something went wrong!
-          Serial.print(F("Couldn't get distance: "));
-          Serial.println(toF.vl_status);
-        } else {
-        Serial.print("Distance: ");
-        Serial.print(dist16);
-        toF.clearInterrupt();
+        if (changeI2CPort(6) == 1) {
+        
+            if (toF.dataReady()) {
+              // new measurement for the taking!
+              uint16_t dist16 = toF.distance();
+            if (dist16 == -1) {
+              // something went wrong!
+              Serial.print(F("Couldn't get distance: "));
+              Serial.println(toF.vl_status);
+            } else {
+            Serial.print("Distance: ");
+            Serial.print(dist16);
+            toF.clearInterrupt();
+            }
+        //       #ifdef DEBUG
+        //         Serial.print("rollOver: ");
+        //         Serial.println(rollOver);
+        //       #endif /*DEBUG*/
+          }
         }
-    //       #ifdef DEBUG
-    //         Serial.print("rollOver: ");
-    //         Serial.println(rollOver);
-    //       #endif /*DEBUG*/
-      }
     }
 /*
 MC3416 Acclerometer I2C requirements
