@@ -39,7 +39,7 @@ void initACC() {
       case 0:
         portNoShift = 7;
         break;
-      case 1:
+      case 1:  
         portNoShift = 0;
         break;
       case 2:
@@ -829,6 +829,11 @@ uint8_t newNetConnect(uint8_t rxStr[50]) {
 uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]) {
    Serial.println("");
    Serial.println("connectWiFi()");
+   Serial.print("ssid: ");
+   Serial.println(ssid);
+   Serial.print("pswd: ");
+   Serial.println(pswd);
+
     #ifdef DEBUG
     Serial.println("connectWiFi()");
    #endif /*DEBUG*/

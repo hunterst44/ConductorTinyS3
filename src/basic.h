@@ -13,11 +13,11 @@
 //#define DEBUG
 #define HTTP_PORT 80
 #define LOCALADDR 1
-#define I2CADDR 0x70  //I2C Address for multiplexor
+#define I2CADDR 0x70  //I2C Address for multiplexoryu6hii76ty7
 #define I2C_SDA 8     //I2C pins
 #define I2C_SCL 9
 #define MXCI2CADDR 0x15   //I2C Address for MXC400 Accelerometer
-#define MC3416I2CADDR 0x4C   //I2C Address for MC3416 Accelerometer (Assuming VPP is at GND on start up)
+#define MC3416I2CADDR 0x4C   //I2C Address for MC3416 Accelerometer ( 0x4C Assuming VPP is at GND on start up). ( 0x6C Assuming VPP is at VCC on start up)
 #define VL53L0XADDR 0x29  //I2C Address for VL53L0X Time of flight sensor
 // #define AccPort1 1        //Ports for Accelerometer 1 (for multiplexor)
 // #define AccPort2 2
