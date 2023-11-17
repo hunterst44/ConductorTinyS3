@@ -140,7 +140,7 @@ void initACC() {
     }
 
     //Test gettting data out of the sensor
-    Serial.println("Read X Axis data");
+    //Serial.println("Read X Axis data");
     int8_t ACCdatas;
     Wire.beginTransmission(MC3416I2CADDR);    //Open TX with start address and stop
       Wire.write(0x0E);                  //Send the register we want to read to the sensor and send a restart

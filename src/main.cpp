@@ -255,14 +255,15 @@ void loop() {
 //   testCount++;
 // }
 //TO Test sensors without WiFI 
-//Comment out everything below this comment block
+//Comment out everything below this if statement
 //  if (timerRead(timer1) >= 24000000) {   //Full 32 bits = 0x100000000, 1 sec = 24000000, 2 sec = 48000000
 //         timerWrite(timer1, 0);
 //         testSensors();
 // }     
         
 //     }
-//}
+
+   //To use neural network and midi writer uncomment everything below and comment everything above (within loop())
 
   //Serial.println("Loop Start");
   //char bytes[SOCKPACKSIZE];
