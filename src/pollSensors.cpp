@@ -37,7 +37,7 @@ void initACC() {
     uint8_t portNoShift = 0;
     switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
       case 0:
-        portNoShift = 7;
+        portNoShift = 6;
         break;
       case 1:  
         portNoShift = 0;
@@ -57,7 +57,6 @@ void initACC() {
     Serial.println(i, DEC);
     portChanged = changeI2CPort(portNoShift);
     
-   
     //Check the status register
     Serial.println("Checking the status register");
 
@@ -826,7 +825,7 @@ uint8_t newNetConnect(uint8_t rxStr[50]) {
 /********************************************
  * connectWiFi(uint8_t mode, char ssid[], char pswd[])
 *********************************************/
-uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]) {
+uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd) {
    Serial.println("");
    Serial.println("connectWiFi()");
    Serial.print("ssid: ");
@@ -916,41 +915,41 @@ uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]) {
 /********************************************
  * tftSetup()
 *********************************************/
-void tftSetup() {
-  Serial.println("tftSetup()");
-    #ifdef DEBUG
-    Serial.println("tftSetup()");
-   #endif /*DEBUG*/
-  tft.init();
-  tft.fillScreen(0xFFFF);
-  tft.setTextColor(TFT_BLACK, TFT_WHITE);
-  tft.setCursor(30,15,1);     //(Left, Top, font)
-  tft.setTextSize(2);
-  //tft.setTextFont(1);
-  tft.println("The Conductor");
-  tft.setCursor(30,30,1);
-  tft.println("-------------");
-}
+// void tftSetup() {
+//   Serial.println("tftSetup()");
+//     #ifdef DEBUG
+//     Serial.println("tftSetup()");
+//    #endif /*DEBUG*/
+//   tft.init();
+//   tft.fillScreen(0xFFFF);
+//   tft.setTextColor(TFT_BLACK, TFT_WHITE);
+//   tft.setCursor(30,15,1);     //(Left, Top, font)
+//   tft.setTextSize(2);
+//   //tft.setTextFont(1);
+//   tft.println("The Conductor");
+//   tft.setCursor(30,30,1);
+//   tft.println("-------------");
+// }
 
-/********************************************
- * tftWriteNetwork(char ssid[])
-*********************************************/
-void tftWriteNetwork(char ssid[], uint8_t mode) {
-  Serial.println("tftWriteNetwork()");
-    #ifdef DEBUG
-    Serial.println("tftWriteNetwork()");
-   #endif /*DEBUG*/
-  //Write the network connection data to the TFT
-  tft.setCursor(30,50,1);
-  tft.println(ssid);
-  tft.setCursor(30,75,1);
-  if (mode == 0) {  //AP Network
-    tft.println(WiFi.softAPIP());
-  } else {
-    tft.println(WiFi.localIP());
-  }
-  Serial.println("TFT written");
-}
+// /********************************************
+//  * tftWriteNetwork(char ssid[])
+// *********************************************/
+// void tftWriteNetwork(char ssid[], uint8_t mode) {
+//   Serial.println("tftWriteNetwork()");
+//     #ifdef DEBUG
+//     Serial.println("tftWriteNetwork()");
+//    #endif /*DEBUG*/
+//   //Write the network connection data to the TFT
+//   tft.setCursor(30,50,1);
+//   tft.println(ssid);
+//   tft.setCursor(30,75,1);
+//   if (mode == 0) {  //AP Network
+//     tft.println(WiFi.softAPIP());
+//   } else {
+//     tft.println(WiFi.localIP());
+//   }
+//   Serial.println("TFT written");
+// }
 
 CntInfo getNetworkSpiffs() {
   Serial.println("");
@@ -1018,7 +1017,7 @@ uint8_t writeNetworkSpiffs(CntInfo cntInfo) {
 }
 
 /********************************************
- * tftWriteNetwork(char ssid[])
+ * void testSensors()
 *********************************************/
 void testSensors() {
       Serial.println();
@@ -1036,7 +1035,7 @@ void testSensors() {
               uint8_t portNoShift = 0;
               switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
                 case 0:
-                  portNoShift = 7;
+                  portNoShift = 6;
                   break;
                 case 1:
                   portNoShift = 0;
@@ -1063,7 +1062,7 @@ void testSensors() {
               // accVecArray[3][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)
             }
 
-        if (changeI2CPort(6) == 1) {
+        if (changeI2CPort(7) == 1) {
         
             if (toF.dataReady()) {
               // new measurement for the taking!
@@ -1083,7 +1082,7 @@ void testSensors() {
         //       #endif /*DEBUG*/
           }
         }
-    }
+   }
 /*
 MC3416 Acclerometer I2C requirements
 To write to a register <ESP32>, {MC3416} 

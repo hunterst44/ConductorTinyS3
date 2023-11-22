@@ -31,14 +31,18 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 #include <stdlib.h>
 #include "secrets.h"
 #include <math.h>
+//#include <TFT_eSPI.h>
+#include <SPI.h>
+#include "Adafruit_VL53L1X.h"
+#include <UMS3.h>
+// #include <ESP32Ping.h>
 // // #include <AsyncElegantOTA.h>
 // // #include <ESPAsyncWebServer.h>
 // //#include "Adafruit_VL53L0X.h"
-#include <TFT_eSPI.h>
-#include <SPI.h>
-// #include <ESP32Ping.h>
-#include "Adafruit_VL53L1X.h"
 
+UMS3 ums3;  //helper functions from Unexpected Maker
+const char *APSSID = APNETWORK;
+const char *APPSWD = APPASS;
 
 uint8_t testCount = 0;
 
@@ -55,7 +59,7 @@ Adafruit_VL53L1X toF = Adafruit_VL53L1X(-1, TOFINTPIN);
 // // VL53L0X_RangingMeasurementData_t measure;
 
 // // //Init Display
-TFT_eSPI tft = TFT_eSPI();
+//TFT_eSPI tft = TFT_eSPI();
 
 // //Globals
 uint8_t I2CPort = 0;
@@ -68,8 +72,8 @@ uint8_t portChanged = 0; //Used to say port has been changed successfully
 
 // //int16_t Acc1Avg[3];   //XYZ vector
 
-char APssid[] = APNETWORK;
-char APpassword[] = APPASS;
+// char APssid[] = APNETWORK;
+// char APpassword[] = APPSWD;
 WiFiServer wifiServer(80);
 WiFiClient client;
 int16_t socketTestData = 4040;
@@ -102,12 +106,16 @@ uint32_t AccPacketEndMicro;
 //  * setup()
 // *************************/
 void setup() {
-
+  setCpuFrequencyMhz(160);
   Serial.begin(115200);
   Serial.println("I am alive!");
    #ifdef DEBUG
     Serial.println("I am alive!");
   #endif /*DEBUG*/
+
+  ums3.begin(); //Start unexpected maker stuff (LED, battery voltage etc.)
+  ums3.setPixelBrightness(255 / 3);
+  ums3.setPixelColor(0x00FF00);   //Green
 
    //Wire.setClock(400000); // use 400 kHz I2C
    Wire.begin(I2C_SDA, I2C_SCL);
@@ -119,8 +127,10 @@ void setup() {
     Serial.println("An Error has occurred while mounting SPIFFS");
   }
   
-  
-  if (changeI2CPort(6) == 1) {;   //Set to I2C port 6 to talk to the toF through the MUX
+  //************************************************************//
+  //                      ToF Setup                             ///
+  //************************************************************//
+  if (changeI2CPort(7) == 1) {;   //Set to I2C port 6 to talk to the toF through the MUX
   if (! toF.begin(0x29, &Wire)) {
     Serial.print(F("Error on init of VL sensor: "));
     Serial.println(toF.vl_status);
@@ -146,13 +156,32 @@ void setup() {
     Serial.println("Problem with I2C mux setting. Check wiring and software.");
   }
 
-  tftSetup();
+  //tftSetup();
 
   //Wifi stuff
-  WiFi.mode(WIFI_MODE_APSTA);
-  WiFi.setAutoReconnect(true);
- 
-  //Check cnt.txt to see if there is a saved network connection
+  ///**************************************************************///
+  //                     WiFi connection methods...                 //
+  //***************************************************************//
+
+  //Create a basic AP connection - for testing
+  // WiFi.mode(WIFI_MODE_APSTA);
+  // //WiFi.setAutoReconnect(true);
+  // Serial.println("Creating AP network");
+  //   //WiFi.begin(NETWORK, PASS);
+  //   //delay(1000);
+  //   //Serial.print("IP: ");
+  //   //Serial.println(WiFi.localIP());
+  // WiFi.softAP("CONDUCTOR", "NONESHALLPASS");
+  // Serial.println("Connected mode 0");
+    
+     
+  ///**************************************************************///
+  //                   More complex method to work with GUI         //
+  //***************************************************************//
+  // if (WiFi.getMode() == WIFI_MODE_AP) {
+      //   Serial.println("Connected");
+ //     Serial.println(WiFi.softAPIP());
+  // //Check cnt.txt to see if there is a saved network connection
   
   CntInfo cntInfo = getNetworkSpiffs();
   Serial.println(cntInfo.cntMode);
@@ -184,33 +213,40 @@ void setup() {
   } else {
     //Connect in AP mode
     cntInfo.cntMode = 0;
-    // cntInfo.pswd = APPASS;
-    // cntInfo.ssid = APNETWORK;
-    connectWiFi(0, APNETWORK, APPASS);
+    // cntInfo.pswd = APPSWD;
+    // cntInfo.ssid = APSSID;
+    connectWiFi(0, APSSID, APPSWD);
   }
    Serial.print("WiFi.SSID()");
    Serial.println(WiFi.SSID());
-   Serial.println(APNETWORK);
+   Serial.println(APSSID);
 
-// CntInfo cntInfo;
-// cntInfo.cntMode = 1;
-// cntInfo.ssid = NETWORK;
-// cntInfo.pswd = PASS;
-// Serial.print("cntInfo.ssid: ");
-// Serial.println(cntInfo.ssid);
-// Serial.print("cntInfo.pswd: ");
-// Serial.println(cntInfo.pswd);
-// if (writeNetworkSpiffs(cntInfo) == 1) {
-//   Serial.println("Wrote to Spiffs");
-// } else {
-//   Serial.print("Spiffs write error");
-// }
+    // //CntInfo cntInfo;
+    // cntInfo.cntMode = 1;
+    // cntInfo.ssid = NETWORK;
+    // cntInfo.pswd = PASS;
+    // Serial.print("cntInfo.ssid: ");
+    // Serial.println(cntInfo.ssid);
+    // Serial.print("cntInfo.pswd: ");
+    // Serial.println(cntInfo.pswd);
+    // if (writeNetworkSpiffs(cntInfo) == 1) {
+    //   Serial.println("Wrote to Spiffs");
+    // } else {
+    //   Serial.print("Spiffs write error");
+    // }
 
-// CntInfo newinfos = getNetworkSpiffs();
+    // CntInfo newinfos = getNetworkSpiffs();
 
+    //Connect to WiFi router network...
+  // WiFi.begin(NETWORK, PASS);
+  // delay(1000);
+  // Serial.print("IP: ");
+  // Serial.println(WiFi.localIP());
+ ///**************************************************************///
+  //                     End WiFi connection methods END          //
+  //***************************************************************//
   
-  //WiFi.begin(NETWORK, PASS);
-  // connectWiFi(0, APssid, APpassword);
+  
 
   //AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
 
@@ -278,6 +314,7 @@ void loop() {
 
   if (client) {
     while (client.connected()) {
+      ums3.setPixelColor(0x0000FF);   //Blue
         //Serial.println("Client Connected");
       while (client.available() > 0) {
         //Serial.println("Client Available");
@@ -434,7 +471,7 @@ void loop() {
           //Structure to hold ToF sensor data
           //VL53L0X_RangingMeasurementData_t measure;
           //if (toFReady) {
-          changeI2CPort(6);
+          changeI2CPort(7);
           if (toF.dataReady()) {
               // new measurement for the taking!
               dist16 = toF.distance();
@@ -587,8 +624,10 @@ void loop() {
                 Serial.println(AccVectorTimeMicro);
               #endif /*DEBUG*/
           } 
-        }
+        } 
+        ums3.setPixelColor(0xFF0000);   //Red
       }
+      ums3.setPixelColor(0xFF0000);   //Red
 //     //client.stop();
 //     // Serial.println("Client disconnected");
 //     // Serial.println();  

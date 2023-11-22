@@ -1,10 +1,17 @@
 //#include "Adafruit_VL53L0X.h"
-#include <TFT_eSPI.h>
-#include <AsyncElegantOTA.h>
-#include <ESPAsyncWebServer.h>
+//#include <TFT_eSPI.h>
+//#include <AsyncElegantOTA.h>
+//#include <ESPAsyncWebServer.h>
 #include "secrets.h"
 #include <SPIFFS.h>
 #include "Adafruit_VL53L1X.h"
+#include <Arduino.h>
+#include <WiFi.h>
+#include <Wire.h>
+#include <stdlib.h>
+#include <math.h>
+#include <SPI.h>
+#include <UMS3.h>
 
 // ----------------------------------------------------------------------------
 // Definition of macros
@@ -74,9 +81,11 @@ extern char APpassword[];
 extern Adafruit_VL53L1X toF;  
 //extern Adafruit_VL53L0X toF;
 //extern VL53L0X_RangingMeasurementData_t measure;
-extern TFT_eSPI tft;
+//extern TFT_eSPI tft;
 extern uint8_t byteCode;
 extern uint8_t portChanged; //Used to say port has been changed successfully
+extern const char *APSSID;
+extern const char *APPSWD;
 
 ///************************************
 //          Global Functions
@@ -89,9 +98,9 @@ extern void vectortoBytes(accVector vector, uint8_t sensorIndex);
 extern accVector movingAvg(uint8_t vecIndex);
 //extern uint8_t getDist(Adafruit_VL53L0X toF);
 extern uint8_t newNetConnect(uint8_t rxStr[50]);
-extern uint8_t connectWiFi(uint8_t mode, char ssid[], char pswd[]);
-extern void tftWriteNetwork(char ssid[], uint8_t mode);
-extern void tftSetup();
+extern uint8_t connectWiFi(uint8_t mode, const char ssid[], const char pswd[]);
+//extern void tftWriteNetwork(char ssid[], uint8_t mode);
+//extern void tftSetup();
 extern uint8_t writeNetworkSpiffs(CntInfo cntInfo);
 extern CntInfo getNetworkSpiffs();
 extern void initACC();
