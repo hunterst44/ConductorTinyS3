@@ -115,7 +115,7 @@ void setup() {
 
   ums3.begin(); //Start unexpected maker stuff (LED, battery voltage etc.)
   ums3.setPixelBrightness(255 / 3);
-  ums3.setPixelColor(0x00FF00);   //Green
+  ums3.setPixelColor(0xFF0000);   //Red
 
    //Wire.setClock(400000); // use 400 kHz I2C
    Wire.begin(I2C_SDA, I2C_SCL);
@@ -125,6 +125,8 @@ void setup() {
 
   if(!SPIFFS.begin(true)){
     Serial.println("An Error has occurred while mounting SPIFFS");
+  } else {
+    Serial.println("Spiffs Okay");
   }
   
   //************************************************************//
@@ -164,25 +166,36 @@ void setup() {
   //***************************************************************//
 
   //Create a basic AP connection - for testing
-  // WiFi.mode(WIFI_MODE_APSTA);
+  WiFi.mode(WIFI_MODE_APSTA);
+
+  //Quick and dirty connection
+  //Connect with secrets.h credentials
+  //Choose 1 or the other
+  //Connect AP network
+  //connectWiFi(0, APNETWORK, APPASS);
+
+   //Connect STA network
+  connectWiFi(1, NETWORK, PASS);
+
+  
   // //WiFi.setAutoReconnect(true);
-  // Serial.println("Creating AP network");
-  //   //WiFi.begin(NETWORK, PASS);
-  //   //delay(1000);
-  //   //Serial.print("IP: ");
-  //   //Serial.println(WiFi.localIP());
+  //Serial.println("Creating AP network");
+    //WiFi.begin(NETWORK, PASS);
+    //delay(1000);
+    //Serial.print("IP: ");
+    //Serial.println(WiFi.localIP());
   // WiFi.softAP("CONDUCTOR", "NONESHALLPASS");
   // Serial.println("Connected mode 0");
     
      
   ///**************************************************************///
-  //                   More complex method to work with GUI         //
+  //            More complex method to connect to WiFi with GUI         //
   //***************************************************************//
   // if (WiFi.getMode() == WIFI_MODE_AP) {
-      //   Serial.println("Connected");
- //     Serial.println(WiFi.softAPIP());
-  // //Check cnt.txt to see if there is a saved network connection
+  //       Serial.println("Connected");
+  //    Serial.println(WiFi.softAPIP());
   
+  //Check cnt.txt to see if there is a saved network connection
   CntInfo cntInfo = getNetworkSpiffs();
   Serial.println(cntInfo.cntMode);
   if (cntInfo.cntMode == 1) {
@@ -233,20 +246,14 @@ void setup() {
     //   Serial.println("Wrote to Spiffs");
     // } else {
     //   Serial.print("Spiffs write error");
-    // }
+    //}
 
     // CntInfo newinfos = getNetworkSpiffs();
 
-    //Connect to WiFi router network...
-  // WiFi.begin(NETWORK, PASS);
-  // delay(1000);
-  // Serial.print("IP: ");
-  // Serial.println(WiFi.localIP());
  ///**************************************************************///
-  //                     End WiFi connection methods END          //
+  //              WiFi connection methods END                      //
   //***************************************************************//
-  
-  
+
 
   //AsyncElegantOTA.begin(&OTAserver);    // Start ElegantOTA
 
@@ -395,7 +402,7 @@ void loop() {
               uint8_t portNoShift = 0;
               switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
                 case 0:
-                  portNoShift = 7;
+                  portNoShift = 6;
                   break;
                 case 1:
                   portNoShift = 0;
@@ -406,7 +413,7 @@ void loop() {
                   portNoShift = 5;
                   break;
                 default:
-                  portNoShift = 7;
+                  portNoShift = 6;
               }
               //For breadboard prototype - hit the sensor at port 7 NUMSENSORS times
               //portNoShift = 7;
@@ -625,9 +632,9 @@ void loop() {
               #endif /*DEBUG*/
           } 
         } 
-        ums3.setPixelColor(0xFF0000);   //Red
+        ums3.setPixelColor(0x00FF00);   //Green
       }
-      ums3.setPixelColor(0xFF0000);   //Red
+      ums3.setPixelColor(0x00FF00);   //Green
 //     //client.stop();
 //     // Serial.println("Client disconnected");
 //     // Serial.println();  

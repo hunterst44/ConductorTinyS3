@@ -862,12 +862,7 @@ uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd) {
       WiFi.disconnect();
       Serial.println("Disconnected");
     } 
-        WiFi.begin(ssid, pswd);
         
-        // WiFi.begin(NETWORK, PASS);
-        delay(1000);
-        Serial.print("IP: ");
-        Serial.println(WiFi.localIP());
         
     // } else {
     //   Serial.println("Disconnect from AP network");
@@ -887,6 +882,10 @@ uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd) {
       Serial.println(ssid);
       Serial.print("pswd: ");
       Serial.println(pswd);
+
+      WiFi.begin(ssid, pswd);
+        
+       
 
       //WiFi.begin(ssid, pswd);
       //WiFi.begin(NETWORK, PASS);
@@ -908,6 +907,8 @@ uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd) {
       }
    }
   Serial.println("Connected to network");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
   //tftWriteNetwork(ssid, mode);
   return 1;
 }
