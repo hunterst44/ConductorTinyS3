@@ -28,9 +28,11 @@ Install the ESP32 arduino code base using your favorite IDE:
 	PlatformIO: https://docs.platformio.org/en/latest/boards/espressif32/esp32s3box.html
 
 ## 2-2 Software Libraries
-Ensure that the following Arduino libraries are installed
-	adafruit/Adafruit VL53L1X@^3.1.0   https://github.com/adafruit/Adafruit_VL53L1X
-	unexpectedmaker/UMS3 Helper@^1.0.1 https://github.com/UnexpectedMaker/esp32s3-arduino-helper
+Ensure that the following Arduino libraries are installed:
+	
+  adafruit/Adafruit VL53L1X@^3.1.0   https://github.com/adafruit/Adafruit_VL53L1X
+	
+  unexpectedmaker/UMS3 Helper@^1.0.1 https://github.com/UnexpectedMaker/esp32s3-arduino-helper
 
 ## 2-3 WiFi
 Create a secrets.h file in the code directory with you WiFi connection information. The ESP32 will its own WiFi network using `APNETWORK` and `APPASS`. You can also specify an external network to connect to using `NETWORK` and `PASS`. Your secrets.h file should look like this:
@@ -102,45 +104,46 @@ To see debug information in the console add `#define DEBUG` to basic.h
 
 # 3 Data Structures
 
-struct accVector {
+`struct accVector {
     int8_t XAcc;
     int8_t YAcc;
     int8_t ZAcc;
-};
+};`
 
-extern char bytes[SOCKPACKSIZE + 1];
-extern accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE];
+`extern char bytes[SOCKPACKSIZE + 1];`
 
-struct CntInfo {
+`extern accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE];`
+
+`struct CntInfo {
     uint8_t cntMode;
     String ssid;
     String pswd;
-};
+};`
 
 # 4 Functions
 
- void initACC()
+ `void initACC()`
 
- accVector getAccAxes(uint8_t Port)
+ `accVector getAccAxes(uint8_t Port)`
 
- int8_t readAccReg(uint8_t Port, uint8_t r)
+ `int8_t readAccReg(uint8_t Port, uint8_t r)`
 
- uint8_t changeI2CPort(uint8_t I2CPort)
+ `uint8_t changeI2CPort(uint8_t I2CPort)`
 
- int8_t getAxisAcc(int8_t axisHi, int8_t axisLo)
+ `int8_t getAxisAcc(int8_t axisHi, int8_t axisLo)`
 
- int16_t getAxis12BitAcc(int16_t axisHi, int16_t axisLo)
+ `int16_t getAxis12BitAcc(int16_t axisHi, int16_t axisLo)`
 
- void vectortoBytes(accVector vector, uint8_t sensorIndex)
+ `void vectortoBytes(accVector vector, uint8_t sensorIndex)`
 
- accVector movingAvg(uint8_t sensorIndex)
+ `accVector movingAvg(uint8_t sensorIndex)`
 
- uint8_t newNetConnect(uint8_t rxStr[50])
+ `uint8_t newNetConnect(uint8_t rxStr[50])`
 
- uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd)
+ `uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd)`
 
- CntInfo getNetworkSpiffs()
+ `CntInfo getNetworkSpiffs()`
 
- uint8_t writeNetworkSpiffs(CntInfo cntInfo)
+ `uint8_t writeNetworkSpiffs(CntInfo cntInfo)`
 
- void testSensors()
+ `void testSensors()`
