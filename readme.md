@@ -24,8 +24,10 @@ I full hardware Bill of Materials as well as printed circuit board and 3-D print
 See Unexpected Makers getting started instructions to get your dev board setup: https://esp32s3.com/getting-started.html
 
 Install the ESP32 arduino code base using your favorite IDE:
-	Arduino IDE: https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html
-	PlatformIO: https://docs.platformio.org/en/latest/boards/espressif32/esp32s3box.html
+	
+  Arduino IDE: https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html
+	
+  PlatformIO: https://docs.platformio.org/en/latest/boards/espressif32/esp32s3box.html
 
 ## 2-2 Software Libraries
 Ensure that the following Arduino libraries are installed:
