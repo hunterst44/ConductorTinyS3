@@ -35,10 +35,6 @@ Note ESPAsyncWebServer is required for the elegant OTA library, but is not used 
 #include <SPI.h>
 #include "Adafruit_VL53L1X.h"
 #include <UMS3.h>
-// #include <ESP32Ping.h>
-// // #include <AsyncElegantOTA.h>
-// // #include <ESPAsyncWebServer.h>
-// //#include "Adafruit_VL53L0X.h"
 
 UMS3 ums3;  //helper functions from Unexpected Maker
 const char *APSSID = APNETWORK;
@@ -46,17 +42,7 @@ const char *APPSWD = APPASS;
 
 uint8_t testCount = 0;
 
-// // // Create AsyncWebServer object on port 80
-// //AsyncWebServer OTAserver(8080);
-
 Adafruit_VL53L1X toF = Adafruit_VL53L1X(-1, TOFINTPIN);
-
-
-// // //Create time of flight sensor object
-// // Adafruit_VL53L0X toF = Adafruit_VL53L0X();
-
-// // // // //Structure to hold ToF sensor data
-// // VL53L0X_RangingMeasurementData_t measure;
 
 // // //Init Display
 //TFT_eSPI tft = TFT_eSPI();
@@ -70,10 +56,6 @@ uint8_t toFReady = 0;    //Set to one when the toF is ready to measure; 0 when m
 uint8_t toFLoopCount = 0; //Counter for number of loops between each ToF reading
 uint8_t portChanged = 0; //Used to say port has been changed successfully
 
-// //int16_t Acc1Avg[3];   //XYZ vector
-
-// char APssid[] = APNETWORK;
-// char APpassword[] = APPSWD;
 WiFiServer wifiServer(80);
 WiFiClient client;
 int16_t socketTestData = 4040;
@@ -81,10 +63,8 @@ int16_t socketTestData = 4040;
 uint8_t txIdx = SOCKPACKSIZE;
 uint8_t rxIdx = 1; //Size of data expected from client - almost always 1
 uint8_t byteCode;
-//uint8_t sockRxStrIdx = 0;
 char bytes[SOCKPACKSIZE + 1];      //Bytes size will be determined at run time - to accept arbitrary length strings
 accVector accVecArray[NUMSENSORS][MOVINGAVGSIZE]; //array of vector arrays 
-//accVector Acc1Vectors[accPacketSize];
 uint8_t sampleCount = 0;    //Counts number of samples for the moving average filter
 uint8_t txCount = 0;
 
@@ -133,7 +113,7 @@ void setup() {
   //                      ToF Setup                             ///
   //************************************************************//
   if (changeI2CPort(7) == 1) {;   //Set to I2C port 6 to talk to the toF through the MUX
-  if (! toF.begin(0x29, &Wire)) {
+  if (!toF.begin(0x29, &Wire)) {
     Serial.print(F("Error on init of VL sensor: "));
     Serial.println(toF.vl_status);
     while (1)       delay(10);
@@ -175,7 +155,7 @@ void setup() {
   //connectWiFi(0, APNETWORK, APPASS);
 
    //Connect STA network
-  connectWiFi(1, NETWORK, PASS);
+  //connectWiFi(1, NETWORK, PASS);
 
   
   // //WiFi.setAutoReconnect(true);
@@ -234,6 +214,8 @@ void setup() {
    Serial.println(WiFi.SSID());
    Serial.println(APSSID);
 
+
+//Use this block of code to write your NETWORK and PASS to a file for automatic connection
     // //CntInfo cntInfo;
     // cntInfo.cntMode = 1;
     // cntInfo.ssid = NETWORK;
@@ -297,7 +279,7 @@ void loop() {
 // } else {
 //   testCount++;
 // }
-//TO Test sensors without WiFI 
+//To Test sensors without WiFI 
 //Comment out everything below this if statement
 //  if (timerRead(timer1) >= 24000000) {   //Full 32 bits = 0x100000000, 1 sec = 24000000, 2 sec = 48000000
 //         timerWrite(timer1, 0);
@@ -307,10 +289,6 @@ void loop() {
 //     }
 
    //To use neural network and midi writer uncomment everything below and comment everything above (within loop())
-
-  //Serial.println("Loop Start");
-  //char bytes[SOCKPACKSIZE];
-  //txIdx = SOCKPACKSIZE; 
 
   if (vecCount == 0) {
       AccPacketStartMicro = timerReadMicros(timer1);
@@ -341,15 +319,16 @@ void loop() {
           
           for (uint8_t k; k < rxIdx; k++) {
             rxStr[k] = client.read();
+            #ifdef DEBUG
             // Serial.print("rxStr[");
             // Serial.print(k, DEC);
             // Serial.print("]: ");
             // Serial.println(rxStr[k], HEX);
+            #endif /*DEBUG*/
           }
-          // Serial.print("rxStr[0]: ");
-          // Serial.println(rxStr[0], HEX);
+         
           byteCode = 0x44;   //Tells the loop to process the network data received
-        // uint8_t txIdx = SOCKPACKSIZE; 
+
         }
 
         Serial.print("byteCode: ");
@@ -430,14 +409,7 @@ void loop() {
             Serial.println(getDataEnd - getDataStart);
             sampleCount++;
           }
-          // Serial.print("accVecArray[0][2]: ");
-          // Serial.println(accVecArray[0][2].XAcc, DEC);
-          // Serial.print("accVecArray[2][4]: ");
-          // Serial.println(accVecArray[2][4].YAcc, DEC);
-          // Serial.print("accVecArray[0][2]: ");
-          // Serial.println(accVecArray[0][2].XAcc, DEC);
-          // Serial.print("accVecArray[1][2]: ");
-          // Serial.println(accVecArray[1][2].ZAcc, DEC);
+      
 //***************************************************************/
                        //Moving Average
 //***************************************************************/
@@ -458,8 +430,10 @@ void loop() {
               //vectortoBytes(AccVectorMAVG[i], i);  //Puts data into byte format for socket TX
             }
             uint32_t MvgAvgEnd = timerReadMicros(timer1);
+            #ifdef DEBUG
             Serial.print("Moving Avg Time Micros: ");
             Serial.println(MvgAvgEnd - MvgAvgStart);
+            #endif /*DEBUG*/
           }
         }
 
@@ -593,9 +567,11 @@ void loop() {
         
       }
             uint32_t TXEnd = timerReadMicros(timer1);
+            #ifdef DEBUG
             Serial.print("Tx Time Micros: ");
             Serial.println(TXEnd - TXStart);
             Serial.println();
+            #endif /*DEBUG*/
 
             txCount++;
             sampleCount = 0;

@@ -883,9 +883,7 @@ uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd) {
       Serial.print("pswd: ");
       Serial.println(pswd);
 
-      WiFi.begin(ssid, pswd);
-        
-       
+      WiFi.begin(ssid, pswd); 
 
       //WiFi.begin(ssid, pswd);
       //WiFi.begin(NETWORK, PASS);
@@ -905,10 +903,11 @@ uint8_t connectWiFi(uint8_t mode, const char *ssid, const char *pswd) {
               //}
             }
       }
+      Serial.println("Connected to network");
+      Serial.print("IP: ");
+      Serial.println(WiFi.localIP());
    }
-  Serial.println("Connected to network");
-  Serial.print("IP: ");
-  Serial.println(WiFi.localIP());
+  
   //tftWriteNetwork(ssid, mode);
   return 1;
 }
