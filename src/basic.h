@@ -62,9 +62,6 @@ struct accVector {
     int8_t XAcc;
     int8_t YAcc;
     int8_t ZAcc;
-    // uint32_t XT;
-    // uint32_t YT;
-    // uint32_t ZT;
 };
 
 extern hw_timer_t * timer1;

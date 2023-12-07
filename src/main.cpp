@@ -116,7 +116,10 @@ void setup() {
   if (!toF.begin(0x29, &Wire)) {
     Serial.print(F("Error on init of VL sensor: "));
     Serial.println(toF.vl_status);
-    while (1)       delay(10);
+    while (1)   {
+         //Serial.print(F("Caught in toF.begin: "));
+         delay(10);
+    }    
   }
 
   Serial.print(F("Sensor ID: 0x"));
@@ -132,7 +135,10 @@ void setup() {
   if (! toF.startRanging()) {
     Serial.print(F("Couldn't start ranging: "));
     Serial.println(toF.vl_status);
-    while (1)       delay(10);
+    while (1)   {
+      //Serial.print(F("Caught in toF.begin: "));
+      delay(10);
+    }    
   }
   } else {
     Serial.println("Problem with I2C mux setting. Check wiring and software.");
@@ -289,7 +295,6 @@ void loop() {
 //     }
 
    //To use neural network and midi writer uncomment everything below and comment everything above (within loop())
-
   if (vecCount == 0) {
       AccPacketStartMicro = timerReadMicros(timer1);
   }
