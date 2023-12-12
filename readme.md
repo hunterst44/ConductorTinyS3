@@ -1,20 +1,22 @@
 ConductorTinyS3
 Joel Legassie
 Dec 2023
-- [1. Introduction](#1-introduction)
-- [2. Getting Started](#2-getting-started)
+- [1 Introduction](#1-introduction)
+- [2 Getting Started](#2-getting-started)
   - [2-1 Hardware](#2-1-hardware)
   - [2-2 Software Libraries](#2-2-software-libraries)
   - [2-3 WiFi](#2-3-wifi)
   - [2-4 Startup](#2-4-startup)
 - [3 Data Structures](#3-data-structures)
 - [4 Functions](#4-functions)
+- [5 Legal Disclamer](#5-legal-disclamer)
 
 
-# 1. Introduction
+
+# 1 Introduction
 This firmware collects and formats data from four MC3416 accelerometers and a VL53L1X laser time of flight sensor and sends the data to a PC client application over a TCP/IP socket using WiFi.
 
-# 2. Getting Started
+# 2 Getting Started
 
 ## 2-1 Hardware
 This firmware has been designed and tested on an Unexpected Maker TinyS3 ESP32 Dev. board. 
@@ -149,3 +151,6 @@ To see debug information in the console add `#define DEBUG` to basic.h
  `uint8_t writeNetworkSpiffs(CntInfo cntInfo)`
 
  `void testSensors()`
+
+ # 5 Legal Disclamer
+DISCLAIMER: The code in this repository is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the code or the use or other dealings in the code.

@@ -112,7 +112,7 @@ void setup() {
   //************************************************************//
   //                      ToF Setup                             ///
   //************************************************************//
-  if (changeI2CPort(7) == 1) {;   //Set to I2C port 6 to talk to the toF through the MUX
+  if (changeI2CPort(7) == 1) {  //Set to I2C port 6 to talk to the toF through the MUX
   if (!toF.begin(0x29, &Wire)) {
     Serial.print(F("Error on init of VL sensor: "));
     Serial.println(toF.vl_status);
