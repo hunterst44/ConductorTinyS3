@@ -87,6 +87,7 @@ uint32_t AccPacketEndMicro;
 // *************************/
 void setup() {
   setCpuFrequencyMhz(160);
+  delay(2000);
   Serial.begin(115200);
   Serial.println("I am alive!");
    #ifdef DEBUG
@@ -107,6 +108,7 @@ void setup() {
     Serial.println("An Error has occurred while mounting SPIFFS");
   } else {
     Serial.println("Spiffs Okay");
+    Serial.println("");
   }
   
   //************************************************************//
@@ -381,8 +383,8 @@ void loop() {
           while (sampleCount < MOVINGAVGSIZE) {
             uint32_t getDataStart = timerReadMicros(timer1);
             for (uint8_t i = 0; i < NUMSENSORS; i++) {
-              // Serial.print("Sensor: ");
-              // Serial.println(i, DEC);
+              Serial.print("Sensor: ");
+              Serial.println(i, DEC);
               uint8_t portNoShift = 0;
               switch (i) {   //I2C Mux ports are not consecutive, so have to do a switch case :(
                 case 0:
@@ -399,9 +401,14 @@ void loop() {
                 default:
                   portNoShift = 6;
               }
+              if (i == 1) {   //For some reason the switch case is not catching this. Use this to fix.
+                portNoShift = 0;
+              }
               //For breadboard prototype - hit the sensor at port 7 NUMSENSORS times
               //portNoShift = 7;
               Serial.println("Call getAccAxes");
+              Serial.print("portNoShift: ");
+              Serial.println(portNoShift, DEC);
               accVecArray[i][sampleCount] = getAccAxes(portNoShift); //Use when their is only one sensor. Reads the same sensor over and over
               //USE this line with more than one sensor //accVecArray[i][sampleCount] = getAccAxes(i+1);  //Gets data from the accelerometer on I2C port 1 (SCL0 /SDA0)
               // accVecArray[1][sampleCount] = getAccAxes(2);  //Gets data from the accelerometer on I2C port 2 (SCL1 /SDA1)

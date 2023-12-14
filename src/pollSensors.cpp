@@ -306,8 +306,8 @@ int8_t readAccReg(uint8_t Port, uint8_t r) {
   #endif /*DEBUG*/
 
   int8_t regOut = 0;
-  // Serial.print("Port: ");
-  // Serial.println(Port, DEC);
+  Serial.print("Port: ");
+  Serial.println(Port, DEC);
   if (Port != I2CPort) {
     I2CPort = Port;
     portChanged = changeI2CPort(Port);
