@@ -266,6 +266,22 @@ void setup() {
   timer1 = timerBegin(0, 10, true);
   timerStart(timer1);
 
+///**************************************************************///
+  //Battery and power stuff
+///**************************************************************///
+  // Get the battery voltage in volts
+float volts = ums3.getBatteryVoltage();
+Serial.print("Battery Voltage: ");
+Serial.println(volts, DEC);
+
+// Detect if VBUS (USB power) is present
+bool USBPWR = ums3.getVbusPresent();
+if (USBPWR == true) {
+Serial.println("USB Power");
+} else {
+  Serial.println("Battery Power");
+}
+
   //Find the I2C ports
   // for (uint8_t i = 0; i < 9; i++) {
   // //accVecArray[0][sampleCount] = getAccAxes(i);

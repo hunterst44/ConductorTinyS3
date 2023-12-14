@@ -102,6 +102,9 @@ extern uint8_t writeNetworkSpiffs(CntInfo cntInfo);
 extern CntInfo getNetworkSpiffs();
 extern void initACC();
 extern void testSensors();
+extern float getBatteryVoltage();
+extern float getLightSensorVoltage();
+extern bool getVbusPresent();
 // extern void numFun();
 // extern void testMC3416();
 
