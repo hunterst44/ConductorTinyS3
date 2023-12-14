@@ -83,6 +83,7 @@ extern uint8_t byteCode;
 extern uint8_t portChanged; //Used to say port has been changed successfully
 extern const char *APSSID;
 extern const char *APPSWD;
+extern uint8_t ledColor;
 
 ///************************************
 //          Global Functions

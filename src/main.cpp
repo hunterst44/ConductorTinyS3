@@ -55,6 +55,7 @@ uint8_t dist = -1;       //For collecting distance data from VL53L0X
 uint8_t toFReady = 0;    //Set to one when the toF is ready to measure; 0 when measuring or disabled
 uint8_t toFLoopCount = 0; //Counter for number of loops between each ToF reading
 uint8_t portChanged = 0; //Used to say port has been changed successfully
+uint8_t ledColor = 0; //0 = 0FF; 1 = red; 2 = green; 3 = blue 4 = yellow;
 
 WiFiServer wifiServer(80);
 WiFiClient client;
@@ -97,6 +98,7 @@ void setup() {
   ums3.begin(); //Start unexpected maker stuff (LED, battery voltage etc.)
   ums3.setPixelBrightness(255 / 3);
   ums3.setPixelColor(0xFF0000);   //Red
+  ledColor = 1;
 
    //Wire.setClock(400000); // use 400 kHz I2C
    Wire.begin(I2C_SDA, I2C_SCL);
@@ -260,9 +262,12 @@ void setup() {
   //   Serial.println("ping failure");
   // }
   uint32_t CPUHz = getCpuFrequencyMhz();
-  Serial.print("CPU Frequency: ");
+  Serial.print("CPU Frequency [MHz]: ");
   Serial.println(CPUHz, DEC);
-  //Start the timer 24MHz
+  uint32_t APBHz = getApbFrequency();
+  Serial.print("APB Clock [Hz]: ");
+  Serial.println(APBHz, DEC);
+  //Start the timer 8MHz
   timer1 = timerBegin(0, 10, true);
   timerStart(timer1);
 
@@ -281,6 +286,7 @@ Serial.println("USB Power");
 } else {
   Serial.println("Battery Power");
 }
+ledColor = 2;
 
   //Find the I2C ports
   // for (uint8_t i = 0; i < 9; i++) {
@@ -323,6 +329,7 @@ void loop() {
   if (client) {
     while (client.connected()) {
       ums3.setPixelColor(0x0000FF);   //Blue
+      ledColor = 3;
         //Serial.println("Client Connected");
       while (client.available() > 0) {
         //Serial.println("Client Available");
@@ -635,14 +642,41 @@ void loop() {
                 Serial.println(AccVectorTimeMicro);
               #endif /*DEBUG*/
           } 
-        } 
+        }
+        if (ledColor == 2) {
         ums3.setPixelColor(0x00FF00);   //Green
+        ledColor = 2;
+        } 
       }
-      ums3.setPixelColor(0x00FF00);   //Green
+      if (ledColor == 2) {
+        ums3.setPixelColor(0x00FF00);   //Green
+        ledColor = 2;
+      } 
 //     //client.stop();
 //     // Serial.println("Client disconnected");
 //     // Serial.println();  
-  if (timerRead(timer1) >= 0x100000000) {   //Full 32 bits = 0x100000000 (~ 9min with 8MHz timer); 24 bits = 0x1000000 (2s with 8MHz timer)
+  if (timerRead(timer1) >= 240000000) {   //(1/8MHz) = 125ns; 125ns * 2 400 000 000 = 300s (5min) //Full 32 bits = 0x100000000 (~ 9min with 8MHz timer); 24 bits = 0x1000000 (2s with 8MHz timer)
+      // Get the battery voltage in volts
+      float volts = ums3.getBatteryVoltage();
+      Serial.print("Battery Voltage: ");
+      Serial.println(volts, DEC);
+
+      if (volts < 3.7) {
+        ums3.setPixelColor(0xFFFF00);   //Yellow
+        ledColor = 4;
+      }
+      else {
+        ledColor = 2;
+      }
+
+      // Detect if VBUS (USB power) is present
+      bool USBPWR = ums3.getVbusPresent();
+      if (USBPWR == true) {
+      Serial.println("USB Power");
+      } else {
+        Serial.println("Battery Power");
+      }
+    
     uint32_t rollOver = timerRead(timer1);
 
       #ifdef DEBUG
